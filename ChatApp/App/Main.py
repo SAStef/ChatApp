@@ -79,7 +79,7 @@ class MainWindow(QMainWindow):
         self.group_icon.setFixedWidth(100)
         self.group_icon.setFixedHeight(50)
         self.group_icon.setStyleSheet("background-color: gray;")
-        self.group_icon.setPixmap(QPixmap('coconut.jpeg'))
+        self.group_icon.setPixmap(QPixmap('./ChatApp/App/Pictures/coconut.jpeg'))
         self.group_icon.setScaledContents(True) #Hvis det er nødvendigt (Edit: Det var det)
 
         self.right_group_icon= QLabel()

@@ -1,12 +1,16 @@
 import socket as s
 from threading import Thread
 import signal
+import sys
 from ChatSession import ChatSession, signal_handler
 
 class MainServer:
     def __init__(self):
         self.listen_port = 1337
         self.TCP_server = s.socket(s.AF_INET, s.SOCK_STREAM)
+
+        self.TCP_server.setsockopt(s.SOL_SOCKET, s.SO_REUSEADDR, 1)
+
         self.TCP_server.bind(('', self.listen_port))
         self.TCP_server.listen(5)
         self.chat_session = ChatSession(self) 
@@ -20,8 +24,7 @@ class MainServer:
                 client_socket, client_address = self.TCP_server.accept()
                 print(f"Bruger tilsluttet via TCP: {client_address}")
 
-               
-                connect_thread = Thread(target=self.handleClient, args=(client_socket,))
+                connect_thread = Thread(target=self.handleClient, args=(client_socket, client_address))
                 connect_thread.start()
 
         except Exception as e:
@@ -30,14 +33,14 @@ class MainServer:
         finally:
             self.TCP_server.close()
 
-    def handleClient(self, client_socket):
+    def handleClient(self, client_socket, client_address):
         try:
             while self.running:
                 client_data = client_socket.recv(2048)
                 if not client_data: 
-                    print('Bruger har forladt chatten')
+                    print(f'{client_address[0]} har forladt chatten')
                     break
-                print(f"Modtaget: {client_data.decode('utf-8')}")
+                print(f"Fra: {client_address[0]}: {client_data.decode('utf-8')}")
         except Exception:
             print(f"Fejl på klientsiden")
         finally:
@@ -52,3 +55,5 @@ if __name__ == "__main__":
         server.run()
     except KeyboardInterrupt:
         print("\nAfslutter server...")
+        server.running = False
+        sys.exit(0)                                # Dræber hele serverprocessen
