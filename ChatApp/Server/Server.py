@@ -1,5 +1,5 @@
 import socket as s
-from threading import Thread
+from threading import Thread, Lock
 import signal
 import sys
 from ChatSession import ChatSession, signal_handler
@@ -17,12 +17,18 @@ class MainServer:
         print(f'Lytter på port {self.listen_port}...')
         self.running = True
 
+        self.clients = []
+        self.lock = Lock()
+
     def run(self):
         try:
             while self.running:
                
                 client_socket, client_address = self.TCP_server.accept()
                 print(f"Bruger tilsluttet via TCP: {client_address}")
+
+                with self.lock:
+                    self.clients.append(client_socket)
 
                 connect_thread = Thread(target=self.handleClient, args=(client_socket, client_address))
                 connect_thread.start()
@@ -31,7 +37,8 @@ class MainServer:
             print(f"Python error: {e}")
 
         finally:
-            self.TCP_server.close()
+            self.stop()
+            # self.TCP_server.close()
 
     def handleClient(self, client_socket, client_address):
         try:
@@ -40,11 +47,41 @@ class MainServer:
                 if not client_data: 
                     print(f'{client_address[0]} har forladt chatten')
                     break
-                print(f"Fra: {client_address[0]}: {client_data.decode('utf-8')}")
+                
+                decoded_message = client_data.decode('utf-8')
+                print(f"Fra: {client_address[0]}: {decoded_message}")
+
+                self.BroadcastMessage(decoded_message, client_socket)
+
         except Exception:
             print(f"Fejl på klientsiden")
+
         finally:
+            with self.lock:
+                if client_socket in self.clients:
+                    self.clients.remove(client_socket)
             client_socket.close()
+
+    def BroadcastMessage(self, message, sender_socket):
+        with self.lock:
+            for client in self.clients:
+                if client != sender_socket:
+                    try:
+                        client.send(message.encode('utf-8'))
+                    except Exception as e:
+                        print(f"Fejl ved udsendelse til klienten: {e}")
+                        self.clients.remove(client)
+
+    def stop(self, ):
+        print(f'Lukker serveren via MainServer.stop()...')
+        self.running = False
+
+        with self.lock:
+            for client in self.clients:
+                client.close()
+            
+        self.clients.clear()
+        self.TCP_server.close()
 
 if __name__ == "__main__":
     server = MainServer()
