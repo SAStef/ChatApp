@@ -32,5 +32,6 @@ class SendHypertextMessage(QFrame):
         self.setFixedSize(int(len(self.lines[0]) * 6.4) + 35, box_height + 25)
 
         self.layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.adjustSize()
 
         self.setLayout(self.layout)
