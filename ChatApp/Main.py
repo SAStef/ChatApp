@@ -238,3 +238,6 @@ if __name__ == "__main__":
     gui = MainWindow()       # Instantierer gui - som jo er instans af QMainWindow
     gui.show()              # Skal specifikt gøres synlig (kan også ske i konstruktor)
     app.exec()
+
+
+    print('MR.R')
