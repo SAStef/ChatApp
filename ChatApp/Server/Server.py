@@ -67,7 +67,7 @@ class MainServer:
             for client in self.clients:
                 if client != sender_socket:
                     try:
-                        client.send(message.encode('utf-8'))
+                        client.sendall(message.encode('utf-8'))
                     except Exception as e:
                         print(f"Fejl ved udsendelse til klienten: {e}")
                         self.clients.remove(client)

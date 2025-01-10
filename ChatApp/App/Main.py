@@ -3,19 +3,20 @@ from PyQt6.QtCore import Qt, pyqtSignal, QThread
 import socket as s
 from PyQt6.QtGui import QPixmap
 from Messages.SendHypertextMessage import SendHypertextMessage
+from threading import Thread
 # from ui.AttachFilesWindow import AttachFilesWindow #ikke brugt endnu - skal uncomment'es
 # from ui.Themes import Themes #ikke brugt endnu - skal uncomment'es
-# from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikke brugt endnu 
+from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikke brugt endnu 
 
 class RecieverThread(QThread):
     message_recieved = pyqtSignal(str)
     
     def __init__(self, client_socket):
         super().__init__()
-        self.running = True
         self.client_socket = client_socket
-
-    def run(self, ):
+        self.running = True
+        
+    def run(self):
         try:
             while self.running:
                 self.server_data = self.client_socket.recv(2048)
@@ -24,23 +25,26 @@ class RecieverThread(QThread):
 
                 self.encoded_message = self.server_data.decode('UTF-8')
                 self.message_recieved.emit(self.encoded_message)
-                print(self.server_data)
 
         except Exception as e:
-            print(f'Fejl i recievertråden: {e}')
+            print(f'Error in receiver thread: {e}')
+        finally:
+            self.client_socket.close()
 
 class MainWindow(QMainWindow):
     def __init__(self, ):
         super().__init__()
         
         # Tilsutter til chat-serveren
-        self.TCP_server_ip = "127.0.0.1"
+        self.TCP_server_ip = "10.209.203.232"
         self.TCP_server_port = 1337
         self.TCP_klient = s.socket(s.AF_INET, s.SOCK_STREAM)
         self.TCP_klient.connect((self.TCP_server_ip, self.TCP_server_port))
 
         # Starter en tråd til recievertråden
         self.reciever = RecieverThread(self.TCP_klient)
+        self.reciever.message_recieved.connect(self.handle_message)  # Connect the signal to the slot
+        self.reciever.start()
         
         # Sætter den centrale widget
         central = QWidget(self)
@@ -70,7 +74,6 @@ class MainWindow(QMainWindow):
         self.dialogue.setWidgetResizable(True)
         self.dialogue_content = QWidget()
         self.dialogue_layout = QVBoxLayout(self.dialogue_content)
-
         self.dialogue_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
 
         self.dialogue.setWidget(self.dialogue_content)
@@ -122,6 +125,20 @@ class MainWindow(QMainWindow):
 
         # Handle button signals
         self.sendbutton.clicked.connect(self.handleButtonClick)
+        
+    def handle_message(self, message):
+        try:                
+                    messageContent = ReceiveHypertextMessage(message)
+                    self.dialogue_layout.addWidget(messageContent)
+                            
+                    spacer = QSpacerItem(5, 5, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+                    self.dialogue_layout.addItem(spacer)
+
+        except Exception as e:
+                error_message = str(e)
+                print(f"Error: {error_message}")
+
+        self.chatfld.setText("")
         
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
