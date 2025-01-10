@@ -87,7 +87,6 @@ class MainWindow(QMainWindow):
         # Starter en tråd til recievertråden
         self.reciever = RecieverThread(self.TCP_klient)
         
-        
         # Sætter den centrale widget
         central = QWidget(self)
         self.setCentralWidget(central)
@@ -238,6 +237,3 @@ if __name__ == "__main__":
     gui = MainWindow()       # Instantierer gui - som jo er instans af QMainWindow
     gui.show()              # Skal specifikt gøres synlig (kan også ske i konstruktor)
     app.exec()
-
-
-    print('MR.R')
