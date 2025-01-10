@@ -1,55 +1,9 @@
 from PyQt6.QtWidgets import *
-from PyQt6.QtCore import QSize, Qt, pyqtSignal, QObject, QTimer, QThread
-from threading import Thread
-import random
-import time
+from PyQt6.QtCore import Qt, pyqtSignal, QThread
 import socket as s
 from PyQt6.QtGui import QPixmap
-
-# Importerer biblioteker til at lave scener
-from PyQt6.QtGui import QPen, QBrush
-
-class SendHypertextMessage(QFrame):
-    def __init__(self, text, parent=None):
-        super().__init__(parent)
-        self.lines = [text[i:i + 100] for i in range(0, len(text), 100)]
-
-        box_height = len(self.lines) * 30
-
-        self.layout = QVBoxLayout(self)
-
-        for line in self.lines:
-                message_label = QLabel(line)
-                self.layout.addWidget(message_label)
-
-        self.setStyleSheet("""
-                QFrame {
-                    background-color: #e0e0e0;
-                    border-radius: 4px;
-                    padding: 2px;
-                    margin: 0px;
-                }
-                QLabel {
-                    color: black;
-                    font-size: 12px;
-                    padding: 0px;
-                    margin: 0px;
-                }
-            """)
-
-        self.setFixedSize(int(len(self.lines[0]) * 6.4) + 35, box_height + 25)
-
-        self.layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-
-        self.setLayout(self.layout)
-
-class RecieveHyperTextMessage(QFrame):
-    def __init__(self, text):
-        super().__init__()
-
-        self.recievedmessage = text
-
-        print(f'Modtaget besked via TCP {text}')
+from Messages.SendHypertextMessage import SendHypertextMessage
+# from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage # bliver ikke brugt endnu 
 
 class RecieverThread(QThread):
     message_recieved = pyqtSignal(str)
@@ -72,7 +26,6 @@ class RecieverThread(QThread):
 
         except Exception as e:
             print(f'Fejl i recievertråden: {e}')
-
 
 class MainWindow(QMainWindow):
     def __init__(self, ):
