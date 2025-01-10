@@ -3,7 +3,9 @@ from PyQt6.QtCore import Qt, pyqtSignal, QThread
 import socket as s
 from PyQt6.QtGui import QPixmap
 from Messages.SendHypertextMessage import SendHypertextMessage
-# from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage # bliver ikke brugt endnu 
+# from ui.AttachFilesWindow import AttachFilesWindow #ikke brugt endnu - skal uncomment'es
+# from ui.Themes import Themes #ikke brugt endnu - skal uncomment'es
+# from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikke brugt endnu 
 
 class RecieverThread(QThread):
     message_recieved = pyqtSignal(str)
@@ -173,17 +175,6 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print(f'Fejl ved nedlukning af TCP-forbindelse: {e}')
         event.accept()
-
-class AttachFilesWindow(QMainWindow):
-    def __init__(self, p):
-        super().__init__()
-        self.parent = p
-
-class Themes():
-    def __innit__(self,p):
-        super().__init__()
-        self.parent= p        
-        pass
 
 if __name__ == "__main__":
     app = QApplication([])  # Initialiser QApplication
