@@ -63,3 +63,5 @@ if __name__ == "__main__":
         
         
 print("let sgoogogogsdajlghaj dga s")
+
+# Dette er en kommentar noob
