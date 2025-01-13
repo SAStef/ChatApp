@@ -4,9 +4,11 @@ import socket as s
 from PyQt6.QtGui import QPixmap
 from Messages.SendHypertextMessage import SendHypertextMessage
 from threading import Thread
+from os import path
 # from ui.AttachFilesWindow import AttachFilesWindow #ikke brugt endnu - skal uncomment'es
 # from ui.Themes import Themes #ikke brugt endnu - skal uncomment'es
-from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikke brugt endnu 
+from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikke brugt endnu
+# from ui.AttachFilesWindow import AttachFilesWindow # bliver heller ikke brugt endnu
 
 class RecieverThread(QThread):
     message_recieved = pyqtSignal(str)
@@ -138,27 +140,24 @@ class MainWindow(QMainWindow):
         except Exception as e:
                 error_message = str(e)
                 print(f"Error: {error_message}")
-
-        self.chatfld.setText("")
         
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
             message_text = self.chatfld.text()
-                    
-            self.TCP_klient.send(message_text.encode('UTF-8'))
-                    
-            try:
-                if len(message_text) != "" and message_text.strip() != "":
-                            
-                    message = SendHypertextMessage(message_text)
-                    self.dialogue_layout.addWidget(message)
-                            
-                    spacer = QSpacerItem(5, 5, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-                    self.dialogue_layout.addItem(spacer)
+            
+            if len(message_text) != "" and message_text.strip() != "":
+                self.TCP_klient.send(message_text.encode('UTF-8'))
+                try:
+                        
+                        message = SendHypertextMessage(message_text)
+                        self.dialogue_layout.addWidget(message)
+                                
+                        spacer = QSpacerItem(5, 5, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+                        self.dialogue_layout.addItem(spacer)
 
-            except Exception as e:
-                error_message = str(e)
-                print(f"Error: {error_message}")
+                except Exception as e:
+                    error_message = str(e)
+                    print(f"Error: {error_message}")
 
             self.chatfld.setText("")
 
@@ -166,21 +165,19 @@ class MainWindow(QMainWindow):
         sender = self.sender()
         if sender == self.sendbutton:
             message_text = self.chatfld.text()
-            
-            self.TCP_klient.send(message_text.encode('UTF-8'))
-            
-            try:
-                if len(message_text) != "" and message_text.strip() != "":
-                    
+
+            if len(message_text) != "" and message_text.strip() != "":
+                self.TCP_klient.send(message_text.encode('UTF-8'))
+                try:
                     message = SendHypertextMessage(message_text)
                     self.dialogue_layout.addWidget(message)
-                    
+
                     spacer = QSpacerItem(5, 5, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
                     self.dialogue_layout.addItem(spacer)
 
-            except Exception as e:
-                error_message = str(e)
-                print(f"Error: {error_message}")
+                except Exception as e:
+                    error_message = str(e)
+                    print(f"Error: {error_message}")
 
             self.chatfld.setText("")
 
@@ -199,3 +196,4 @@ if __name__ == "__main__":
     gui = MainWindow()       # Instantierer gui - som jo er instans af QMainWindow
     gui.show()              # Skal specifikt gøres synlig (kan også ske i konstruktor)
     app.exec()
+    
