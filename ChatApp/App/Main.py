@@ -140,8 +140,6 @@ class MainWindow(QMainWindow):
         except Exception as e:
                 error_message = str(e)
                 print(f"Error: {error_message}")
-
-        self.chatfld.setText("")
         
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
