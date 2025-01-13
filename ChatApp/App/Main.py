@@ -12,6 +12,7 @@ from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikk
 from ui.AttachFilesWindow import AttachFilesWindow # bliver heller ikke brugt endnu
 from ui.ScrollAreaUI import scrollarea_styles
 from ui.ActiveFriendsPanel import active_friends_panel_style
+from ui.AutoScrollButton import auto_scroll_on_button_style, auto_scroll_off_button_style
 
 
 class RecieverThread(QThread):
@@ -50,7 +51,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         
         # Tilsutter til chat-serveren
-        self.TCP_server_ip = "10.209.224.4"
+        self.TCP_server_ip = "10.209.203.232"
         self.TCP_server_port = 1337
         self.TCP_klient = s.socket(s.AF_INET, s.SOCK_STREAM)
         self.TCP_klient.connect((self.TCP_server_ip, self.TCP_server_port))
@@ -103,15 +104,42 @@ class MainWindow(QMainWindow):
         self.right_group_icon.setPixmap(QPixmap('./ChatApp/App/Pictures/ginger.jpeg'))
 
         self.act_friends_panel = QLabel("Active users: ", self) 
-        self.act_friends_panel.setFixedWidth(500)
+        self.act_friends_panel.setFixedWidth(1000)
         self.act_friends_panel.setFixedHeight(30)
 
         self.act_friends_panel.setStyleSheet(active_friends_panel_style)
+        
+        self.AutoScrollOn = QPushButton("Autoscroll On")
+        self.AutoScrollOff = QPushButton("Autoscroll Off")
+        
+        self.AutoScrollOn.setStyleSheet(auto_scroll_on_button_style)
+        self.AutoScrollOff.setStyleSheet(auto_scroll_off_button_style)
+
+        self.isAutoScroll = True
 
         upper_layout= QHBoxLayout()
         upper_layout.addWidget(self.left_group_icon)
         upper_layout.addWidget(self.act_friends_panel)
         upper_layout.addWidget(self.right_group_icon)
+        
+        # all autoscroll stuff
+        auto_scroller_layout = QVBoxLayout()
+        
+        self.isAutoScroll = True
+
+        opacity_effect_on = QGraphicsOpacityEffect()
+        opacity_effect_on.setOpacity(1.0)  
+        self.AutoScrollOn.setGraphicsEffect(opacity_effect_on)
+
+        opacity_effect_off = QGraphicsOpacityEffect()
+        opacity_effect_off.setOpacity(0.3) 
+        self.AutoScrollOff.setGraphicsEffect(opacity_effect_off)
+        
+        auto_scroller_layout.addWidget(self.AutoScrollOn)
+        auto_scroller_layout.addWidget(self.AutoScrollOff)
+
+        auto_scroller_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
+        upper_layout.addLayout(auto_scroller_layout)
 
         panel_mid = QHBoxLayout()
         panel_mid.addWidget(self.dialogue)
@@ -128,6 +156,32 @@ class MainWindow(QMainWindow):
         self.sendbutton.clicked.connect(self.handleButtonClick)
         self.attachbutton.clicked.connect(self.handleButtonClick)
         
+        self.AutoScrollOff.clicked.connect(self.autoScrollButton)
+        self.AutoScrollOn.clicked.connect(self.autoScrollButton)
+        
+    def autoScrollButton(self):
+        sender = self.sender()
+      
+        if sender == self.AutoScrollOn:
+            self.isAutoScroll = True
+            opacity_effect_on = QGraphicsOpacityEffect()
+            opacity_effect_on.setOpacity(1.0) 
+            self.AutoScrollOn.setGraphicsEffect(opacity_effect_on)
+           
+            opacity_effect_off = QGraphicsOpacityEffect()
+            opacity_effect_off.setOpacity(0.3) 
+            self.AutoScrollOff.setGraphicsEffect(opacity_effect_off)
+
+        elif sender == self.AutoScrollOff:
+            self.isAutoScroll = False
+            opacity_effect_off = QGraphicsOpacityEffect()
+            opacity_effect_off.setOpacity(1.0) 
+            self.AutoScrollOff.setGraphicsEffect(opacity_effect_off)
+
+            opacity_effect_on = QGraphicsOpacityEffect()
+            opacity_effect_on.setOpacity(0.3) 
+            self.AutoScrollOn.setGraphicsEffect(opacity_effect_on)
+
     def handle_message(self, message):
         try:
                 if len(message) != "" and message.strip() != "":
@@ -138,7 +192,8 @@ class MainWindow(QMainWindow):
                 error_message = str(e)
                 print(f"Error: {error_message}")
               
-        QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
+        if self.isAutoScroll == True:
+            QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
 
     def handle_file(self, file_content, file_name):
         try:
@@ -150,7 +205,8 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print(f'Fejl: {e}')
         
-        QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
+        if self.isAutoScroll == True:
+            QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
@@ -167,7 +223,8 @@ class MainWindow(QMainWindow):
                     error_message = str(e)
                     print(f"Error: {error_message}")
 
-            QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
+            if self.isAutoScroll == True:
+                QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
             self.chatfld.setText("")
 
     def handleButtonClick(self):
@@ -185,7 +242,8 @@ class MainWindow(QMainWindow):
                     error_message = str(e)
                     print(f"Error: {error_message}")
 
-            QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
+            if self.isAutoScroll == True:
+                QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
             self.chatfld.setText("")
 
         elif sender == self.attachbutton:
