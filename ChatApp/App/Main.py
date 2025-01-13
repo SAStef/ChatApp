@@ -8,27 +8,37 @@ from os import path
 # from ui.AttachFilesWindow import AttachFilesWindow #ikke brugt endnu - skal uncomment'es
 # from ui.Themes import Themes #ikke brugt endnu - skal uncomment'es
 from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikke brugt endnu
-# from ui.AttachFilesWindow import AttachFilesWindow # bliver heller ikke brugt endnu
+
+from ui.AttachFilesWindow import AttachFilesWindow # bliver heller ikke brugt endnu
 from ui.ScrollAreaUI import scrollarea_styles
 from ui.ActiveFriendsPanel import active_friends_panel_style
 
+
 class RecieverThread(QThread):
     message_recieved = pyqtSignal(str)
+    file_recieved = pyqtSignal(bytes, str)
     
     def __init__(self, client_socket):
         super().__init__()
         self.client_socket = client_socket
         self.running = True
         
-    def run(self):
+    def run(self, ):
         try:
             while self.running:
                 self.server_data = self.client_socket.recv(2048)
                 if not self.server_data:
                     break
 
-                self.encoded_message = self.server_data.decode('UTF-8')
-                self.message_recieved.emit(self.encoded_message)
+                header = self.server_data.decode('UTF-8').splitlines()[0]
+
+                if header.startswith('FILE'):
+                    file_name = self.server_data.decode('UTF-8').splitlines()[1]
+                    file_content = self.server_data.decode('UTF-8').splitlines()[2]
+                    self.file_recieved.emit(file_content, file_name)
+                else:
+                    self.encoded_message = self.server_data.decode('UTF-8')
+                    self.message_recieved.emit(self.encoded_message)
 
         except Exception as e:
             print(f'Error in receiver thread: {e}')
@@ -48,6 +58,7 @@ class MainWindow(QMainWindow):
         # Starter en tråd til recievertråden
         self.reciever = RecieverThread(self.TCP_klient)
         self.reciever.message_recieved.connect(self.handle_message)  # Connect the signal to the slot
+        self.reciever.file_recieved.connect(self.handle_file)
         self.reciever.start()
         
         # Sætter den centrale widget
@@ -115,6 +126,7 @@ class MainWindow(QMainWindow):
 
         # Handle button signals
         self.sendbutton.clicked.connect(self.handleButtonClick)
+        self.attachbutton.clicked.connect(self.handleButtonClick)
         
     def handle_message(self, message):
         try:
@@ -125,7 +137,19 @@ class MainWindow(QMainWindow):
         except Exception as e:
                 error_message = str(e)
                 print(f"Error: {error_message}")
+              
+        QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
 
+    def handle_file(self, file_content, file_name):
+        try:
+            # Gemmer filen på disken
+            with open(f'./downloads/{file_name}', 'wb') as f:
+                f.write(file_content)
+            print(f'Filen {file_name} blev gemt i ./downloads')
+
+        except Exception as e:
+            print(f'Fejl: {e}')
+        
         QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
 
     def keyPressEvent(self, event):
@@ -165,7 +189,7 @@ class MainWindow(QMainWindow):
             self.chatfld.setText("")
 
         elif sender == self.attachbutton:
-            pass
+            AttachFilesWindow(self)
 
     def closeEvent(self, event):
         try:
