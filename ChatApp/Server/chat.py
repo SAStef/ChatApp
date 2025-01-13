@@ -19,8 +19,7 @@ class ChatApp(QMainWindow):
 
     def open_file_dialog(self):
         # Åbn fil-dialog og få den valgte fils sti
-        options = QFileDialog.Options()
-        options |= QFileDialog.ReadOnly
+        options = QFileDialog.Option.ReadOnly
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Vælg en fil til upload",
@@ -38,4 +37,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = ChatApp()
     window.show()
-    # sys.exit(app.exec_())
+    sys.exit(app.exec())
