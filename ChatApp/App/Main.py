@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import *
-from PyQt6.QtCore import Qt, pyqtSignal, QThread
+from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
 import socket as s
 from PyQt6.QtGui import QPixmap
 from Messages.SendHypertextMessage import SendHypertextMessage
@@ -8,7 +8,11 @@ from os import path
 # from ui.AttachFilesWindow import AttachFilesWindow #ikke brugt endnu - skal uncomment'es
 # from ui.Themes import Themes #ikke brugt endnu - skal uncomment'es
 from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikke brugt endnu
+
 from ui.AttachFilesWindow import AttachFilesWindow # bliver heller ikke brugt endnu
+from ui.ScrollAreaUI import scrollarea_styles
+from ui.ActiveFriendsPanel import active_friends_panel_style
+
 
 class RecieverThread(QThread):
     message_recieved = pyqtSignal(str)
@@ -70,61 +74,47 @@ class MainWindow(QMainWindow):
         self.sendbutton = QPushButton("Send besked")
         self.attachbutton = QPushButton("Vedhæft fil(er)")
 
-        left_spacer = QSpacerItem(200, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        right_spacer = QSpacerItem(200, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-
         panel_south = QHBoxLayout()
-        panel_south.addSpacerItem(left_spacer)
         panel_south.addWidget(self.attachbutton)
         panel_south.addWidget(self.chatfld)
         panel_south.addWidget(self.sendbutton)
-        panel_south.addSpacerItem(right_spacer)
 
-        # Definerer widgets til mid layoutet
         self.dialogue = QScrollArea()
         self.dialogue.setWidgetResizable(True)
+        self.dialogue.setStyleSheet(scrollarea_styles)
+    
         self.dialogue_content = QWidget()
         self.dialogue_layout = QVBoxLayout(self.dialogue_content)
-        self.dialogue_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
+        self.dialogue_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.dialogue.setWidget(self.dialogue_content)
 
-        self.group_icon= QLabel()
-        self.group_icon.setFixedWidth(100)
-        self.group_icon.setFixedHeight(50)
-        self.group_icon.setStyleSheet("background-color: gray;")
-        self.group_icon.setPixmap(QPixmap('./ChatApp/App/Pictures/coconut.jpeg'))
-        self.group_icon.setScaledContents(True) #Hvis det er nødvendigt (Edit: Det var det)
+        self.left_group_icon= QLabel()
+        self.left_group_icon.setFixedWidth(100)
+        self.left_group_icon.setFixedHeight(50)
+        self.left_group_icon.setStyleSheet("background-color: #0D1C2F;")
+        self.left_group_icon.setPixmap(QPixmap('./ChatApp/App/Pictures/coconut.jpeg'))
+        self.left_group_icon.setScaledContents(True) #Hvis det er nødvendigt (Edit: Det var det)
 
         self.right_group_icon= QLabel()
         self.right_group_icon.setFixedWidth(100)
         self.right_group_icon.setFixedHeight(50)
-        self.right_group_icon.setStyleSheet("background-color: gray;")
+        self.right_group_icon.setStyleSheet("background-color: #0D1C2F;")
+        self.right_group_icon.setPixmap(QPixmap('./ChatApp/App/Pictures/ginger.jpeg'))
 
-        self.act_friends_panel= QLineEdit()
-        self.act_friends_panel.setFixedWidth(600)
-        self.act_friends_panel.setFixedHeight(50)
-        self.act_friends_panel.setStyleSheet('backgro)und-color: gray;')
+        self.act_friends_panel = QLabel("Active users: ", self) 
+        self.act_friends_panel.setFixedWidth(500)
+        self.act_friends_panel.setFixedHeight(30)
+
+        self.act_friends_panel.setStyleSheet(active_friends_panel_style)
 
         upper_layout= QHBoxLayout()
-        #upper_layout.addSpacerItem(upper_left_spacer)
-        upper_layout.addWidget(self.group_icon)
+        upper_layout.addWidget(self.left_group_icon)
         upper_layout.addWidget(self.act_friends_panel)
         upper_layout.addWidget(self.right_group_icon)
-        #upper_layout.addSpacerItem(right_spacer)
-
-        self.friends_panel = QTextBrowser()
-        self.friends_panel.setMaximumWidth(200)
-        self.friends_panel.setStyleSheet("background-color: lightgray;")
-
-        self.files_panel = QTextBrowser()
-        self.files_panel.setMaximumWidth(200)
-        self.files_panel.setStyleSheet("background-color: lightgray;")
 
         panel_mid = QHBoxLayout()
-        panel_mid.addWidget(self.friends_panel)
         panel_mid.addWidget(self.dialogue)
-        panel_mid.addWidget(self.files_panel)
 
         # Main layout
         layout = QVBoxLayout()
@@ -142,14 +132,13 @@ class MainWindow(QMainWindow):
         try:
                 if len(message) != "" and message.strip() != "":
                     messageContent = ReceiveHypertextMessage(message)
-                    self.dialogue_layout.addWidget(messageContent)
-                            
-                    spacer = QSpacerItem(5, 5, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-                    self.dialogue_layout.addItem(spacer)
+                    self.dialogue_layout.addWidget(messageContent, alignment=Qt.AlignmentFlag.AlignLeft)
 
         except Exception as e:
                 error_message = str(e)
                 print(f"Error: {error_message}")
+              
+        QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
 
     def handle_file(self, file_content, file_name):
         try:
@@ -161,6 +150,8 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print(f'Fejl: {e}')
         
+        QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
+
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
             message_text = self.chatfld.text()
@@ -170,15 +161,13 @@ class MainWindow(QMainWindow):
                 try:
                         
                         message = SendHypertextMessage(message_text)
-                        self.dialogue_layout.addWidget(message)
-                                
-                        spacer = QSpacerItem(5, 5, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-                        self.dialogue_layout.addItem(spacer)
-
+                        self.dialogue_layout.addWidget(message, alignment=Qt.AlignmentFlag.AlignRight)
+                        
                 except Exception as e:
                     error_message = str(e)
                     print(f"Error: {error_message}")
 
+            QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
             self.chatfld.setText("")
 
     def handleButtonClick(self):
@@ -190,15 +179,13 @@ class MainWindow(QMainWindow):
                 self.TCP_klient.send(message_text.encode('UTF-8'))
                 try:
                     message = SendHypertextMessage(message_text)
-                    self.dialogue_layout.addWidget(message)
-
-                    spacer = QSpacerItem(5, 5, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-                    self.dialogue_layout.addItem(spacer)
+                    self.dialogue_layout.addWidget(message, alignment=Qt.AlignmentFlag.AlignRight)
 
                 except Exception as e:
                     error_message = str(e)
                     print(f"Error: {error_message}")
 
+            QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
             self.chatfld.setText("")
 
         elif sender == self.attachbutton:
