@@ -6,8 +6,6 @@ class SendHypertextMessage(QFrame):
         super().__init__(parent)
         self.lines = [text[i:i + 100] for i in range(0, len(text), 100)]
 
-        box_height = len(self.lines) * 30
-
         self.layout = QVBoxLayout(self)
 
         for line in self.lines:
@@ -16,7 +14,7 @@ class SendHypertextMessage(QFrame):
 
         self.setStyleSheet("""
                 QFrame {
-                    background-color: #e0e0e0;
+                    background-color: #7286A0;
                     border-radius: 4px;
                     padding: 2px;
                     margin: 0px;
