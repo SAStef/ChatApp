@@ -4,9 +4,11 @@ import socket as s
 from PyQt6.QtGui import QPixmap
 from Messages.SendHypertextMessage import SendHypertextMessage
 from threading import Thread
+from os import path
 # from ui.AttachFilesWindow import AttachFilesWindow #ikke brugt endnu - skal uncomment'es
 # from ui.Themes import Themes #ikke brugt endnu - skal uncomment'es
-from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikke brugt endnu 
+from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikke brugt endnu
+# from ui.AttachFilesWindow import AttachFilesWindow # bliver heller ikke brugt endnu
 
 class RecieverThread(QThread):
     message_recieved = pyqtSignal(str)
