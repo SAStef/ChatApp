@@ -36,7 +36,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         
         # Tilsutter til chat-serveren
-        self.TCP_server_ip = "10.209.203.232"
+        self.TCP_server_ip = "10.209.224.4"
         self.TCP_server_port = 1337
         self.TCP_klient = s.socket(s.AF_INET, s.SOCK_STREAM)
         self.TCP_klient.connect((self.TCP_server_ip, self.TCP_server_port))
@@ -127,7 +127,8 @@ class MainWindow(QMainWindow):
         self.sendbutton.clicked.connect(self.handleButtonClick)
         
     def handle_message(self, message):
-        try:                
+        try:
+                if len(message) != "" and message.strip() != "":
                     messageContent = ReceiveHypertextMessage(message)
                     self.dialogue_layout.addWidget(messageContent)
                             
