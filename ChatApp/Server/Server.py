@@ -3,6 +3,8 @@ from threading import Thread, Lock
 import signal
 import sys
 from ChatSession import ChatSession, signal_handler
+import os
+from os import path
 
 class MainServer:
     def __init__(self):
@@ -49,9 +51,12 @@ class MainServer:
                     break
                 
                 decoded_message = client_data.decode('utf-8')
-                print(f"Fra: {client_address[0]}: {decoded_message}")
 
-                self.BroadcastMessage(decoded_message, client_socket)
+                if decoded_message.startswith('FILE:'):
+                    self.send_file(decoded_message, client_socket)
+                else:
+                    self.BroadcastMessage(decoded_message, client_socket)
+                    print(f"Fra: {client_address[0]}: {decoded_message}")
 
         except Exception:
             print(f"Fejl på klientsiden")
@@ -68,6 +73,44 @@ class MainServer:
                 if client != sender_socket:
                     try:
                         client.sendall(message.encode('utf-8'))
+                    except Exception as e:
+                        print(f"Fejl ved udsendelse til klienten: {e}")
+                        self.clients.remove(client)
+
+    def send_file(self, file_header, client_socket):
+        header_lines = file_header.split("\n")
+        file_name = header_lines[0].split(":")[1].strip()
+        file_length = int(header_lines[1].split(":")[1].strip())
+
+        temp_dir = "./tmp"
+        if not path.exists(temp_dir):
+            os.makedirs(temp_dir)
+
+        file_path = path.join(temp_dir, file_name)
+        print(f'Gemmer midlertidig fil "{file_name}" inden videre transmission...')
+
+        with open(file_path, 'wb') as f:
+            bytes_recieved = 0
+            while bytes_recieved < file_length:
+                buffer = client_socket.recv(2048)
+                if not buffer:
+                    break
+                f.write(buffer)
+                bytes_recieved += len(buffer)
+        
+        # Now broadcasting this temporary file
+        new_file_header = f'FILE: {file_name}\nLENGTH: {file_length}\n'
+
+        with self.lock:
+            for client in self.clients:
+                if client != client_socket:
+                    try:
+                        client.send(new_file_header)
+                        with open(file_path, 'rb') as f:
+                            while buffer := f.read(2048):
+                                client.send(buffer)
+                        print(f'File {file_name} has been broadcasted to the group chat')
+                    
                     except Exception as e:
                         print(f"Fejl ved udsendelse til klienten: {e}")
                         self.clients.remove(client)

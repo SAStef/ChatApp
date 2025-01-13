@@ -33,8 +33,8 @@ class ChatApp(QMainWindow):
             # Her kan du tilføje koden til at sende filen over chatten.
 
 if __name__ == "__main__":
-    import sys
-    app = QApplication(sys.argv)
+    app = QApplication([])
     window = ChatApp()
     window.show()
-    sys.exit(app.exec())
+    app.exec()
+

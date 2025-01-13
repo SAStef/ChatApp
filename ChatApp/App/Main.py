@@ -5,6 +5,7 @@ from PyQt6.QtGui import QPixmap
 from Messages.SendHypertextMessage import SendHypertextMessage
 from threading import Thread
 from os import path
+import os
 # from ui.AttachFilesWindow import AttachFilesWindow #ikke brugt endnu - skal uncomment'es
 # from ui.Themes import Themes #ikke brugt endnu - skal uncomment'es
 from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikke brugt endnu
@@ -24,33 +25,56 @@ class RecieverThread(QThread):
         self.running = True
         
     def run(self, ):
-        try:
-            while self.running:
-                self.server_data = self.client_socket.recv(2048)
-                if not self.server_data:
+        counter = 0
+        while self.running:
+            try:
+                serverdata = self.client_socket.recv(2048)
+                if not serverdata:
+                    self.client_socket.close()
+                    break
+                
+                decoded_data = serverdata.decode('UTF-8')
+
+                if decoded_data.startswith('FILE:'):
+                    self.receive_file(decoded_data)
+                else:
+                    self.message_recieved.emit(decoded_data)
+            except Exception as e:
+                if self.running:
+                    print(f'Fejl i ReceiverThread: {e}')
+                    counter += 1
+                if counter > 20:
                     break
 
-                header = self.server_data.decode('UTF-8').splitlines()[0]
+    def receive_file(self, file_header):
+        header_lines = file_header.split("\n")
+        filename = header_lines[0].split(":")[1].strip()
+        file_length = int(header_lines[1].split(":")[1].strip())
 
-                if header.startswith('FILE'):
-                    file_name = self.server_data.decode('UTF-8').splitlines()[1]
-                    file_content = self.server_data.decode('UTF-8').splitlines()[2]
-                    self.file_recieved.emit(file_content, file_name)
-                else:
-                    self.encoded_message = self.server_data.decode('UTF-8')
-                    self.message_recieved.emit(self.encoded_message)
+        download_dir = "./Downloads"
+        if not path.exists(download_dir):
+            os.makedirs(download_dir)
 
-        except Exception as e:
-            print(f'Error in receiver thread: {e}')
-        finally:
-            self.client_socket.close()
+        file_path = path.join(download_dir, filename)
+        print(f"Modtager fil: {filename} på {file_length} bytes...")
+
+        with open(file_path, 'wb') as f:
+            bytes_received = 0
+            while bytes_received < file_length:
+                buffer = self.client_socket.recv(2048)
+                if not buffer:
+                    break
+                f.write(buffer)
+                bytes_received += len(buffer)
+        
+        print(f'Fil gemt med stien: {file_path}')
 
 class MainWindow(QMainWindow):
     def __init__(self, ):
         super().__init__()
         
         # Tilsutter til chat-serveren
-        self.TCP_server_ip = "10.209.224.4"
+        self.TCP_server_ip = "127.0.0.1"
         self.TCP_server_port = 1337
         self.TCP_klient = s.socket(s.AF_INET, s.SOCK_STREAM)
         self.TCP_klient.connect((self.TCP_server_ip, self.TCP_server_port))
