@@ -6,11 +6,12 @@ from threading import Thread
 
 
 class Themes(QMainWindow):
-    def __init__(self,p):
-        super().__init__()
-        self.parent= p        
+    def __init__(self):
+        super().__init__()     
         
         self.selected_theme= None
+
+        print("funktionen blev kaldt")
 
         theme_central= QWidget(self)
         self.setCentralWidget(theme_central)
@@ -100,7 +101,7 @@ class Themes(QMainWindow):
                     background-position: center;
                 }''')
         elif self.selected_theme == 'Sonic The Hedgehog':
-            self.parent.dialogue.setStyleSheet('''
+            self.setStyleSheet('''
                 QWidget {
                     background-image: url("sonic_the_hedgehog.jpg");
                     background-repeat: no-repeat;

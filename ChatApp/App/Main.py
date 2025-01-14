@@ -7,7 +7,6 @@ from threading import Thread
 from os import path
 import os
 # from ui.AttachFilesWindow import AttachFilesWindow #ikke brugt endnu - skal uncomment'es
-<<<<<<< Updated upstream
 # from ui.Themes import Themes #ikke brugt endnu - skal uncomment'es
 from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikke brugt endnu
 
@@ -15,10 +14,8 @@ from ui.AttachFilesWindow import AttachFilesWindow # bliver heller ikke brugt en
 from ui.ScrollAreaUI import scrollarea_styles
 from ui.ActiveFriendsPanel import active_friends_panel_style
 from ui.AutoScrollButton import auto_scroll_on_button_style, auto_scroll_off_button_style
-=======
-from ui.Themes import Themes #ikke brugt endnu - skal uncomment'es
-from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikke brugt endnu 
->>>>>>> Stashed changes
+from ui.Themes import Themes
+from ui.SetThemeButton import set_theme_button
 
 class RecieverThread(QThread):
     message_recieved = pyqtSignal(str)
@@ -79,12 +76,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         
         # Tilsutter til chat-serveren
-<<<<<<< Updated upstream
-        self.TCP_server_ip = "127.0.0.1"
-
-=======
         self.TCP_server_ip = "10.209.224.4"
->>>>>>> Stashed changes
         self.TCP_server_port = 1337
         self.TCP_klient = s.socket(s.AF_INET, s.SOCK_STREAM)
         self.TCP_klient.connect((self.TCP_server_ip, self.TCP_server_port))
@@ -135,10 +127,10 @@ class MainWindow(QMainWindow):
         self.right_group_icon.setFixedHeight(50)
         self.right_group_icon.setStyleSheet("background-color: #0D1C2F;")
         self.right_group_icon.setPixmap(QPixmap('./ChatApp/App/Pictures/ginger.jpeg'))
+        self.right_group_icon.setScaledContents(True)
 
-<<<<<<< Updated upstream
         self.act_friends_panel = QLabel("Active users: ", self) 
-        self.act_friends_panel.setFixedWidth(1000)
+        self.act_friends_panel.setFixedWidth(800)
         self.act_friends_panel.setFixedHeight(30)
 
         self.act_friends_panel.setStyleSheet(active_friends_panel_style)
@@ -152,23 +144,22 @@ class MainWindow(QMainWindow):
         self.isAutoScroll = True
 
         upper_layout= QHBoxLayout()
-        upper_layout.addWidget(self.left_group_icon)
-        upper_layout.addWidget(self.act_friends_panel)
-=======
-        self.set_theme= QPushButton('Set Theme')
-        self.set_theme.setFixedWidth(600)
-        self.set_theme.setFixedHeight(50)
-        self.set_theme.setStyleSheet('backgro)und-color: gray;')
+        
+        self.set_theme_btn= QPushButton('Set Theme')
+        self.set_theme_btn.setFixedWidth(100)
+        self.set_theme_btn.setFixedHeight(50)
+        self.set_theme_btn.setStyleSheet(set_theme_button)
 
         
 
         upper_layout= QHBoxLayout()
         #upper_layout.addSpacerItem(upper_left_spacer)
-        upper_layout.addWidget(self.group_icon)
-        upper_layout.addWidget(self.set_theme)
->>>>>>> Stashed changes
+        upper_layout.addWidget(self.left_group_icon)
+        upper_layout.addWidget(self.act_friends_panel)
+        upper_layout.addWidget(self.set_theme_btn)
         upper_layout.addWidget(self.right_group_icon)
         
+
         # all autoscroll stuff
         auto_scroller_layout = QVBoxLayout()
         
@@ -201,11 +192,8 @@ class MainWindow(QMainWindow):
 
         # Handle button signals
         self.sendbutton.clicked.connect(self.handleButtonClick)
-<<<<<<< Updated upstream
         self.attachbutton.clicked.connect(self.handleButtonClick)
-=======
-        self.set_theme.clicked.connect(self.handleButtonClick)
->>>>>>> Stashed changes
+        self.set_theme_btn.clicked.connect(self.handleButtonClick)
         
         self.AutoScrollOff.clicked.connect(self.autoScrollButton)
         self.AutoScrollOn.clicked.connect(self.autoScrollButton)
@@ -297,8 +285,8 @@ class MainWindow(QMainWindow):
                 QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
             self.chatfld.setText("")
         
-        elif sender == self.set_theme:
-            Themes(self)
+        elif sender == self.set_theme_btn:
+            Themes()
 
         elif sender == self.attachbutton:
             AttachFilesWindow(self)
