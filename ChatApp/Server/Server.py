@@ -122,7 +122,7 @@ class MainServer:
         with self.lock:
             for client in self.clients:
                 client.close()
-
+            
         self.clients.clear()
         self.TCP_server.close()
 
