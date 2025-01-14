@@ -217,6 +217,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         try:
+            # self.reciever.wait()
             self.TCP_klient.close()
         except Exception as e:
             print(f'Fejl ved nedlukning af TCP-forbindelse: {e}')
