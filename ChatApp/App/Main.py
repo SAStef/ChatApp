@@ -6,11 +6,8 @@ from Messages.SendHypertextMessage import SendHypertextMessage
 from threading import Thread
 from os import path
 import os
-# from ui.AttachFilesWindow import AttachFilesWindow #ikke brugt endnu - skal uncomment'es
-# from ui.Themes import Themes #ikke brugt endnu - skal uncomment'es
-from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikke brugt endnu
-
-from ui.AttachFilesWindow import AttachFilesWindow # bliver heller ikke brugt endnu
+from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage 
+from ui.AttachFilesWindow import AttachFilesWindow 
 from ui.ScrollAreaUI import scrollarea_styles
 from ui.ActiveFriendsPanel import active_friends_panel_style
 from ui.AutoScrollButton import auto_scroll_on_button_style, auto_scroll_off_button_style
@@ -74,7 +71,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         
         # Tilsutter til chat-serveren
-        self.TCP_server_ip = "127.0.0.1"
+        self.TCP_server_ip = "10.209.224.4"
 
         self.TCP_server_port = 1337
         self.TCP_klient = s.socket(s.AF_INET, s.SOCK_STREAM)
