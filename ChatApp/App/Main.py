@@ -24,7 +24,7 @@ class RecieverThread(QThread):
         self.client_socket = client_socket
         self.running = True
         
-    def run(self):
+    def run(self, ):
         counter = 0
         while self.running:
             try:
@@ -33,77 +33,48 @@ class RecieverThread(QThread):
                     self.client_socket.close()
                     break
                 
-                if serverdata.startswith(b'FILE:'):
-                    print("beofre faile")
-                    self.receive_file(serverdata)
-                    print("after fails")
+                decoded_data = serverdata.decode('UTF-8')
+
+                if decoded_data.startswith('FILE:'):
+                    self.receive_file(decoded_data)
                 else:
-                    decoded_data = serverdata.decode('UTF-8')
                     self.message_recieved.emit(decoded_data)
             except Exception as e:
                 if self.running:
-                    print(f'Error in ReceiverThread: {e}')
+                    print(f'Fejl i ReceiverThread: {e}')
                     counter += 1
                 if counter > 20:
                     break
 
     def receive_file(self, file_header):
-        try:
-            # Step 1: Decode the header to extract the filename and file length
-            header_lines = file_header.decode('utf-8').split("\n")
-            filename = header_lines[0].split(":")[1].strip()
-            file_length = int(header_lines[1].split(":")[1].strip())
+        header_lines = file_header.split("\n")
+        filename = header_lines[0].split(":")[1].strip()
+        file_length = int(header_lines[1].split(":")[1].strip())
 
-            download_dir = "./Downloads"
-            os.makedirs(download_dir, exist_ok=True)
+        download_dir = "./Downloads"
+        if not path.exists(download_dir):
+            os.makedirs(download_dir)
 
-            file_path = os.path.join(download_dir, filename)
+        file_path = path.join(download_dir, filename)
+        print(f"Modtager fil: {filename} på {file_length} bytes...")
 
-            self.client_socket.settimeout(5)
-
-            with open(file_path, 'wb') as f:
-                bytes_received = 0
-
-                while bytes_received < file_length:
-                    try:
-                        remaining_bytes = file_length - bytes_received
-                        buffer_size = min(2048, remaining_bytes)
-                        print(buffer_size)
-                        print(remaining_bytes)
-
-                        buffer = self.client_socket.recv(buffer_size)
-
-                        if not buffer:  
-                            raise ConnectionError("Connection closed before receiving the complete file.")
-
-                        f.write(buffer)
-                        bytes_received += len(buffer)
-
-                    except s.timeout:
-                        if bytes_received < file_length:
-                            print(f"Timeout reached. Expected {file_length} bytes but received {bytes_received} bytes.")
-                            raise ConnectionError("File transfer incomplete due to timeout.")
-                        else:
-                            print("Timeout reached, but all data has been received.")
-                            break
-
-            if bytes_received == file_length:
-                print(f"File successfully saved at: {file_path}")
-            else:
-                raise ValueError(f"Incomplete file received. Expected {file_length} bytes, but got {bytes_received} bytes.")
-
-        except Exception as e:
-            print(f"An error occurred while receiving the file: {e}")
-
-        finally:
-            self.client_socket.settimeout(None)
+        with open(file_path, 'wb') as f:
+            bytes_received = 0
+            while bytes_received < file_length:
+                buffer = self.client_socket.recv(2048)
+                if not buffer:
+                    break
+                f.write(buffer)
+                bytes_received += len(buffer)
+        
+        print(f'Fil gemt med stien: {file_path}')
 
 class MainWindow(QMainWindow):
     def __init__(self, ):
         super().__init__()
         
         # Tilsutter til chat-serveren
-        self.TCP_server_ip = "10.209.224.4"
+        self.TCP_server_ip = "127.0.0.1"
 
         self.TCP_server_port = 1337
         self.TCP_klient = s.socket(s.AF_INET, s.SOCK_STREAM)
