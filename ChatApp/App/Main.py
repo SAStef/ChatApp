@@ -10,9 +10,6 @@ from ui.AttachFilesWindow import AttachFilesWindow
 from ui.ScrollAreaUI import scrollarea_styles
 from ui.ActiveFriendsPanel import active_friends_panel_style
 from ui.AutoScrollButton import auto_scroll_on_button_style, auto_scroll_off_button_style
-from ui.Themes import Themes
-from ui.SetThemeButton import set_theme_button
-
 
 class ReceiveFilesThread(QThread):
     def __init__(self, client_socket, file_name, file_length):
