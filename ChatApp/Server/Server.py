@@ -105,7 +105,7 @@ class MainServer:
             for client in self.clients:
                 if client != client_socket:
                     try:
-                        client.send(new_file_header)
+                        client.send(new_file_header.encode('utf-8'))
                         with open(file_path, 'rb') as f:
                             while buffer := f.read(2048):
                                 client.send(buffer)
