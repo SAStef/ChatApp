@@ -35,7 +35,7 @@ class ReceiveFilesThread(QThread):
                 line = sock_file.readline()
                 if line == b'\n':  # Empty line marks the end of the header
                     break
-                header_lines.append(line.decode('UTF-8').strip())
+                header_lines.append(line.decode('utf-8').strip())
 
             # Process header to extract filename and file length
             if len(header_lines) < 2:
@@ -73,8 +73,95 @@ class ReceiveFilesThread(QThread):
 
 class ReceiverThread(QThread):
     message_recieved = pyqtSignal(str)
+    file_recieved = pyqtSignal(str) 
+
+    def __init__(self, client_socket):
+        super().__init__()
+        self.client_socket = client_socket
+        self.running = True
+
+    def run(self):
+        counter = 0
+        while self.running:
+            try:
+                serverdata = self.client_socket.recv(1024)
+                if not serverdata:
+                    self.client_socket.close()
+                    break
+
+                if serverdata.startswith(b'FILE:'):
+                    print("before failing")
+
+                    file_header = serverdata
+                    while b"\n\n" not in file_header:
+                        file_header += self.client_socket.recv(1024)
+
+                    file_thread = ReceiveFilesThread(client_socket=self.client_socket, file_header=file_header)
+                    file_thread.start()
+
+                    print("not failing :)")
+                else:
+                    decoded_data = serverdata.decode('UTF-8')
+                    self.message_recieved.emit(decoded_data)
+
+            except Exception as e:
+                if self.running:
+                    print(f'Error in ReceiverThread: {e}')
+                    counter += 1
+                if counter > 20:
+                    break
+
+    def run(self):
+        try:
+            # Use makefile() to handle the socket as a file
+            sock_file = self.client_socket.makefile('rb')
+
+            # Read the header line by line
+            header_lines = []
+            while True:
+                line = sock_file.readline()
+                if line == b'\n':  # Empty line marks the end of the header
+                    break
+                header_lines.append(line.decode('utf-8').strip())
+
+            # Process header to extract filename and file length
+            if len(header_lines) < 2:
+                raise ValueError("Invalid header format")
+
+            filename = header_lines[0].split(":")[1].strip()
+            file_length = int(header_lines[1].split(":")[1].strip())
+
+            print(f"Receiving file: {filename}, size: {file_length} bytes")
+
+            # Prepare the download directory
+            download_dir = "./Downloads"
+            os.makedirs(download_dir, exist_ok=True)
+            file_path = os.path.join(download_dir, filename)
+
+            # Open file to write data
+            with open(file_path, 'wb') as f:
+                # Read and write file data in chunks
+                bytes_received = 0
+                while bytes_received < file_length:
+                    buffer = sock_file.read(min(1024, file_length - bytes_received))
+                    if not buffer:
+                        raise ConnectionError("Connection closed before file transfer completed.")
+                    f.write(buffer)
+                    bytes_received += len(buffer)
+                    print(f"Received {bytes_received}/{file_length} bytes")
+
+                print(f"File saved to: {file_path}")
+
+        except Exception as e:
+            print(f"Error in file transfer: {e}")
+
+        finally:
+            self.client_socket.settimeout(None)
+            sock_file.close()
+
+class ReceiverThread(QThread):
+    message_recieved = pyqtSignal(str)
     file_recieved = pyqtSignal(str)  # Signal to emit when a file is received
-    file_transfer_in_progress = pyqtSignal(bool)  # New signal to notify about file transfer status
 
     def __init__(self, client_socket):
         super().__init__()
@@ -92,10 +179,7 @@ class ReceiverThread(QThread):
                 
                 # Check if the data is a file header (starts with 'FILE:')
                 if serverdata.startswith(b'FILE:'):
-                    print("Starting file transfer...")
-
-                    # Notify that file transfer is in progress
-                    self.file_transfer_in_progress.emit(True)
+                    print("before failing")
 
                     # Ensure we capture the full header before creating the thread
                     while b"\n\n" not in serverdata:
@@ -105,7 +189,7 @@ class ReceiverThread(QThread):
                     file_thread = ReceiveFilesThread(client_socket=self.client_socket, file_header=serverdata)
                     file_thread.start()
 
-                    print("File transfer in progress...")
+                    print("not failing :)")
                 else:
                     # Decode the text message and emit it
                     decoded_data = serverdata.decode('UTF-8', errors='ignore')  # Ignore invalid UTF-8 bytes
@@ -117,75 +201,22 @@ class ReceiverThread(QThread):
                     counter += 1
                 if counter > 20:
                     break
-
-    def stop(self):
-        self.running = False
-        
-class ReceiverThread(QThread):
-    message_recieved = pyqtSignal(str)
-    file_recieved = pyqtSignal(str)
-    file_transfer_in_progress = pyqtSignal(bool)  # Signal for file transfer progress
-
-    def __init__(self, client_socket):
-        super().__init__()
-        self.client_socket = client_socket
-        self.running = True
-
-    def run(self):
-        counter = 0
-        while self.running:
-            try:
-                serverdata = self.client_socket.recv(1024)
-                if not serverdata:
-                    self.client_socket.close()
-                    break
-
-                # Check if the data is a file header (starts with 'FILE:')
-                if serverdata.startswith(b'FILE:'):
-                    print("Starting file transfer...")
-
-                    # Notify that file transfer is in progress
-                    self.file_transfer_in_progress.emit(True)
-
-                    # Ensure we capture the full header before creating the thread
-                    while b"\n\n" not in serverdata:
-                        serverdata += self.client_socket.recv(1024)
-
-                    # Pass the file header and client socket to ReceiveFilesThread
-                    file_thread = ReceiveFilesThread(client_socket=self.client_socket, file_header=serverdata)
-                    file_thread.start()
-
-                    print("File transfer in progress...")
-                else:
-                    # Decode the text message and emit it
-                    decoded_data = serverdata.decode('UTF-8', errors='ignore')  # Ignore invalid UTF-8 bytes
-                    self.message_recieved.emit(decoded_data)
-
-            except Exception as e:
-                if self.running:
-                    print(f'Error in ReceiverThread: {e}')
-                    counter += 1
-                if counter > 20:
-                    break
-
-    def stop(self):
-        self.running = False
                 
 class MainWindow(QMainWindow):
     def __init__(self, ):
         super().__init__()
-
+        
         # Tilsutter til chat-serveren
         self.TCP_server_ip = "10.209.224.4"
+        
         self.TCP_server_port = 1337
         self.TCP_klient = s.socket(s.AF_INET, s.SOCK_STREAM)
         self.TCP_klient.connect((self.TCP_server_ip, self.TCP_server_port))
 
         # Starter en tråd til recievertråden
         self.reciever = ReceiverThread(self.TCP_klient)
-        self.reciever.message_recieved.connect(self.handle_message)
+        self.reciever.message_recieved.connect(self.handle_message)  # Connect the signal to the slot
         self.reciever.file_recieved.connect(self.handle_file)
-        self.reciever.file_transfer_in_progress.connect(self.handle_file_transfer_status)  # Connect signal here
         self.reciever.start()
         
         # Sætter den centrale widget
@@ -200,8 +231,6 @@ class MainWindow(QMainWindow):
         self.chatfld = QLineEdit()
         self.sendbutton = QPushButton("Send besked")
         self.attachbutton = QPushButton("Vedhæft fil(er)")
-        
-        self.sendbutton.setEnabled(True)
 
         panel_south = QHBoxLayout()
         panel_south.addWidget(self.attachbutton)
@@ -324,13 +353,6 @@ class MainWindow(QMainWindow):
             opacity_effect_on.setOpacity(0.3) 
             self.AutoScrollOn.setGraphicsEffect(opacity_effect_on)
 
-    def handle_file_transfer_status(self, is_in_progress):
-        """Handle file transfer status and disable/enable the send button."""
-        if is_in_progress:
-            self.sendbutton.setEnabled(False)  # Disable send button while the file is transferring
-        else:
-            self.sendbutton.setEnabled(True)  # Enable send button once the file transfer is complete
-
     def handle_message(self, message):
         try:
                 if len(message) != "" and message.strip() != "":
@@ -346,17 +368,16 @@ class MainWindow(QMainWindow):
 
     def handle_file(self, file_content, file_name):
         try:
+            # Gemmer filen på disken
             with open(f'./downloads/{file_name}', 'wb') as f:
                 f.write(file_content)
-            print(f'File {file_name} saved to ./downloads')
-
-            self.reciever.file_transfer_in_progress.emit(False)
+            print(f'Filen {file_name} blev gemt i ./downloads')
 
         except Exception as e:
-            print(f'Error: {e}')
+            print(f'Fejl: {e}')
         
         if self.isAutoScroll == True:
-            QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
+            QTimer.singleShot(20, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
@@ -374,7 +395,7 @@ class MainWindow(QMainWindow):
                     print(f"Error: {error_message}")
 
             if self.isAutoScroll == True:
-                QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
+                QTimer.singleShot(20, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
             self.chatfld.setText("")
 
     def handleButtonClick(self):

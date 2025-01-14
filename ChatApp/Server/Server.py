@@ -50,7 +50,7 @@ class MainServer:
                     print(f'{client_address[0]} har forladt chatten')
                     break
                 
-                decoded_message = client_data.decode('UTF-8')
+                decoded_message = client_data.decode('utf-8')
 
                 if decoded_message.startswith('FILE:'):
                     self.send_file(decoded_message, client_socket)
@@ -72,7 +72,7 @@ class MainServer:
             for client in self.clients:
                 if client != sender_socket:
                     try:
-                        client.sendall(message.encode('UTF-8'))
+                        client.sendall(message.encode('utf-8'))
                     except Exception as e:
                         print(f"Fejl ved udsendelse til klienten: {e}")
                         self.clients.remove(client)
