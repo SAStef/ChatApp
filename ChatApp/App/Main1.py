@@ -14,8 +14,11 @@ from ui.AttachFilesWindow import AttachFilesWindow # bliver heller ikke brugt en
 from ui.ScrollAreaUI import scrollarea_styles
 from ui.ActiveFriendsPanel import active_friends_panel_style
 from ui.AutoScrollButton import auto_scroll_on_button_style, auto_scroll_off_button_style
-from ui.Themes import Themes
-from ui.SetThemeButton import set_theme_button
+
+class RecieveFileThread(QThread):
+    def __init__(self):
+        super().__init__()
+        pass
 
 class RecieverThread(QThread):
     message_recieved = pyqtSignal(str)
@@ -26,7 +29,7 @@ class RecieverThread(QThread):
         self.client_socket = client_socket
         self.running = True
         
-    def run(self):
+    def run(self, ):
         counter = 0
         while self.running:
             try:
@@ -35,59 +38,56 @@ class RecieverThread(QThread):
                     self.client_socket.close()
                     break
                 
-                if serverdata.startswith(b'FILE:'):
-                    print("beofre faile")
-                    self.receive_file(serverdata)
-                    print("after fails")
+                decoded_data = serverdata.decode('UTF-8')
+                
+                if decoded_data.startswith('FILE:'):
+                    self.receive_file(decoded_data)
                 else:
-                    decoded_data = serverdata.decode('UTF-8')
                     self.message_recieved.emit(decoded_data)
+        
             except Exception as e:
                 if self.running:
-                    print(f'Error in ReceiverThread: {e}')
+                    print(f'Fejl i ReceiverThread: {e}')
                     counter += 1
                 if counter > 20:
                     break
 
-    def receive_file(self, file_header):
+    def receive_file(client_socket):
         try:
-            # Step 1: Decode the header to extract the filename and file length
-            header_lines = file_header.decode('utf-8').split("\n")
+            header_data = b""
+            while b"\n\n" not in header_data:
+                chunk = client_socket.recv(1024)  
+                if not chunk:
+                    raise ConnectionError("Connection closed while receiving the header.")
+                header_data += chunk
+            
+            header_end = header_data.index(b"\n\n") + 2
+            file_header = header_data[:header_end].decode('utf-8')
+            file_content = header_data[header_end:]
+            
+            header_lines = file_header.split("\n")
             filename = header_lines[0].split(":")[1].strip()
             file_length = int(header_lines[1].split(":")[1].strip())
-
+            
             download_dir = "./Downloads"
             os.makedirs(download_dir, exist_ok=True)
 
             file_path = os.path.join(download_dir, filename)
 
-            self.client_socket.settimeout(5)
-
             with open(file_path, 'wb') as f:
-                bytes_received = 0
+                bytes_received = len(file_content)  
+                f.write(file_content)
 
                 while bytes_received < file_length:
-                    try:
-                        remaining_bytes = file_length - bytes_received
-                        buffer_size = min(2048, remaining_bytes)
-                        print(buffer_size)
-                        print(remaining_bytes)
+                    remaining_bytes = file_length - bytes_received
+                    buffer_size = min(2048, remaining_bytes)
+                    buffer = client_socket.recv(buffer_size)
 
-                        buffer = self.client_socket.recv(buffer_size)
+                    if not buffer:  
+                        raise ConnectionError("Connection closed before receiving the complete file.")
 
-                        if not buffer:  
-                            raise ConnectionError("Connection closed before receiving the complete file.")
-
-                        f.write(buffer)
-                        bytes_received += len(buffer)
-
-                    except s.timeout:
-                        if bytes_received < file_length:
-                            print(f"Timeout reached. Expected {file_length} bytes but received {bytes_received} bytes.")
-                            raise ConnectionError("File transfer incomplete due to timeout.")
-                        else:
-                            print("Timeout reached, but all data has been received.")
-                            break
+                    f.write(buffer)
+                    bytes_received += len(buffer)
 
             if bytes_received == file_length:
                 print(f"File successfully saved at: {file_path}")
@@ -97,16 +97,13 @@ class RecieverThread(QThread):
         except Exception as e:
             print(f"An error occurred while receiving the file: {e}")
 
-        finally:
-            self.client_socket.settimeout(None)
-
 class MainWindow(QMainWindow):
     def __init__(self, ):
         super().__init__()
         
         # Tilsutter til chat-serveren
         self.TCP_server_ip = "10.209.224.4"
-        
+
         self.TCP_server_port = 1337
         self.TCP_klient = s.socket(s.AF_INET, s.SOCK_STREAM)
         self.TCP_klient.connect((self.TCP_server_ip, self.TCP_server_port))
@@ -157,10 +154,9 @@ class MainWindow(QMainWindow):
         self.right_group_icon.setFixedHeight(50)
         self.right_group_icon.setStyleSheet("background-color: #0D1C2F;")
         self.right_group_icon.setPixmap(QPixmap('./ChatApp/App/Pictures/ginger.jpeg'))
-        self.right_group_icon.setScaledContents(True)
 
         self.act_friends_panel = QLabel("Active users: ", self) 
-        self.act_friends_panel.setFixedWidth(800)
+        self.act_friends_panel.setFixedWidth(1000)
         self.act_friends_panel.setFixedHeight(30)
 
         self.act_friends_panel.setStyleSheet(active_friends_panel_style)
@@ -174,22 +170,10 @@ class MainWindow(QMainWindow):
         self.isAutoScroll = True
 
         upper_layout= QHBoxLayout()
-        
-        self.set_theme_btn= QPushButton('Set Theme')
-        self.set_theme_btn.setFixedWidth(100)
-        self.set_theme_btn.setFixedHeight(50)
-        self.set_theme_btn.setStyleSheet(set_theme_button)
-
-        
-
-        upper_layout= QHBoxLayout()
-        #upper_layout.addSpacerItem(upper_left_spacer)
         upper_layout.addWidget(self.left_group_icon)
         upper_layout.addWidget(self.act_friends_panel)
-        upper_layout.addWidget(self.set_theme_btn)
         upper_layout.addWidget(self.right_group_icon)
         
-
         # all autoscroll stuff
         auto_scroller_layout = QVBoxLayout()
         
@@ -223,7 +207,6 @@ class MainWindow(QMainWindow):
         # Handle button signals
         self.sendbutton.clicked.connect(self.handleButtonClick)
         self.attachbutton.clicked.connect(self.handleButtonClick)
-        self.set_theme_btn.clicked.connect(self.handleButtonClick)
         
         self.AutoScrollOff.clicked.connect(self.autoScrollButton)
         self.AutoScrollOn.clicked.connect(self.autoScrollButton)
@@ -314,9 +297,6 @@ class MainWindow(QMainWindow):
             if self.isAutoScroll == True:
                 QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
             self.chatfld.setText("")
-        
-        elif sender == self.set_theme_btn:
-            Themes()
 
         elif sender == self.attachbutton:
             AttachFilesWindow(self)
