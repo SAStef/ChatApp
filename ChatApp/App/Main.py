@@ -3,14 +3,10 @@ from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
 import socket as s
 from PyQt6.QtGui import QPixmap
 from Messages.SendHypertextMessage import SendHypertextMessage
-from threading import Thread
-from os import path
 import os
-# from ui.AttachFilesWindow import AttachFilesWindow #ikke brugt endnu - skal uncomment'es
-# from ui.Themes import Themes #ikke brugt endnu - skal uncomment'es
-from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikke brugt endnu
+from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage
 
-from ui.AttachFilesWindow import AttachFilesWindow # bliver heller ikke brugt endnu
+from ui.AttachFilesWindow import AttachFilesWindow
 from ui.ScrollAreaUI import scrollarea_styles
 from ui.ActiveFriendsPanel import active_friends_panel_style
 from ui.AutoScrollButton import auto_scroll_on_button_style, auto_scroll_off_button_style
@@ -19,61 +15,35 @@ from ui.SetThemeButton import set_theme_button
 
 
 class ReceiveFilesThread(QThread):
-    def __init__(self, client_socket, file_header):
+    def __init__(self, client_socket, file_name, file_length):
         super().__init__()
         self.client_socket = client_socket
-        self.file_header = file_header
+        self.file_name = file_name
+        self.file_length = file_length
 
     def run(self):
         try:
-            # Use makefile() to handle the socket as a file
-            sock_file = self.client_socket.makefile('rb')
-
-            # Read the header line by line
-            header_lines = []
-            while True:
-                line = sock_file.readline()
-                if line == b'\n':  # Empty line marks the end of the header
-                    break
-                header_lines.append(line.decode('utf-8').strip())
-
-            # Process header to extract filename and file length
-            if len(header_lines) < 2:
-                raise ValueError("Invalid header format")
-
-            filename = header_lines[0].split(":")[1].strip()
-            file_length = int(header_lines[1].split(":")[1].strip())
-
-            print(f"Receiving file: {filename}, size: {file_length} bytes")
-
-            # Prepare the download directory
             download_dir = "./Downloads"
             os.makedirs(download_dir, exist_ok=True)
-            file_path = os.path.join(download_dir, filename)
+            file_path = os.path.join(download_dir, self.file_name)
 
-            # Open file to write data
             with open(file_path, 'wb') as f:
                 bytes_received = 0
-                while bytes_received < file_length:
-                    buffer = sock_file.read(min(1024, file_length - bytes_received))
+                while bytes_received < self.file_length:
+                    buffer = self.client_socket.recv(min(2048, self.file_length - bytes_received))
                     if not buffer:
                         raise ConnectionError("Connection closed before file transfer completed.")
                     f.write(buffer)
                     bytes_received += len(buffer)
-                    print(f"Received {bytes_received}/{file_length} bytes")
+                    print(f"Received {bytes_received}/{self.file_length} bytes")
 
                 print(f"File saved to: {file_path}")
 
         except Exception as e:
             print(f"Error in file transfer: {e}")
 
-        finally:
-            self.client_socket.settimeout(None)
-            sock_file.close()
-
 class ReceiverThread(QThread):
     message_recieved = pyqtSignal(str)
-    file_recieved = pyqtSignal(str) 
 
     def __init__(self, client_socket):
         super().__init__()
@@ -84,115 +54,25 @@ class ReceiverThread(QThread):
         counter = 0
         while self.running:
             try:
-                serverdata = self.client_socket.recv(1024)
+                serverdata = self.client_socket.recv(2048)
                 if not serverdata:
                     self.client_socket.close()
                     break
 
                 if serverdata.startswith(b'FILE:'):
-                    print("before failing")
-
-                    file_header = serverdata
-                    while b"\n\n" not in file_header:
-                        file_header += self.client_socket.recv(1024)
-
-                    file_thread = ReceiveFilesThread(client_socket=self.client_socket, file_header=file_header)
-                    file_thread.start()
-
-                    print("not failing :)")
-                else:
-                    decoded_data = serverdata.decode('UTF-8')
-                    self.message_recieved.emit(decoded_data)
-
-            except Exception as e:
-                if self.running:
-                    print(f'Error in ReceiverThread: {e}')
-                    counter += 1
-                if counter > 20:
-                    break
-
-    def run(self):
-        try:
-            # Use makefile() to handle the socket as a file
-            sock_file = self.client_socket.makefile('rb')
-
-            # Read the header line by line
-            header_lines = []
-            while True:
-                line = sock_file.readline()
-                if line == b'\n':  # Empty line marks the end of the header
-                    break
-                header_lines.append(line.decode('utf-8').strip())
-
-            # Process header to extract filename and file length
-            if len(header_lines) < 2:
-                raise ValueError("Invalid header format")
-
-            filename = header_lines[0].split(":")[1].strip()
-            file_length = int(header_lines[1].split(":")[1].strip())
-
-            print(f"Receiving file: {filename}, size: {file_length} bytes")
-
-            # Prepare the download directory
-            download_dir = "./Downloads"
-            os.makedirs(download_dir, exist_ok=True)
-            file_path = os.path.join(download_dir, filename)
-
-            # Open file to write data
-            with open(file_path, 'wb') as f:
-                # Read and write file data in chunks
-                bytes_received = 0
-                while bytes_received < file_length:
-                    buffer = sock_file.read(min(1024, file_length - bytes_received))
-                    if not buffer:
-                        raise ConnectionError("Connection closed before file transfer completed.")
-                    f.write(buffer)
-                    bytes_received += len(buffer)
-                    print(f"Received {bytes_received}/{file_length} bytes")
-
-                print(f"File saved to: {file_path}")
-
-        except Exception as e:
-            print(f"Error in file transfer: {e}")
-
-        finally:
-            self.client_socket.settimeout(None)
-            sock_file.close()
-
-class ReceiverThread(QThread):
-    message_recieved = pyqtSignal(str)
-    file_recieved = pyqtSignal(str)  # Signal to emit when a file is received
-
-    def __init__(self, client_socket):
-        super().__init__()
-        self.client_socket = client_socket
-        self.running = True
-
-    def run(self):
-        counter = 0
-        while self.running:
-            try:
-                serverdata = self.client_socket.recv(1024)
-                if not serverdata:
-                    self.client_socket.close()
-                    break
-                
-                # Check if the data is a file header (starts with 'FILE:')
-                if serverdata.startswith(b'FILE:'):
-                    print("before failing")
-
-                    # Ensure we capture the full header before creating the thread
                     while b"\n\n" not in serverdata:
-                        serverdata += self.client_socket.recv(1024)
+                        serverdata += self.client_socket.recv(2048)
 
-                    # Pass the file header and client socket to ReceiveFilesThread
-                    file_thread = ReceiveFilesThread(client_socket=self.client_socket, file_header=serverdata)
+                    header_data, _ = serverdata.split(b"\n\n", 1)
+                    header_lines = header_data.decode('utf-8').strip().split("\n")
+                    file_name = header_lines[0].split(":")[1].strip()
+                    file_length = int(header_lines[1].split(":")[1].strip())
+
+                    file_thread = ReceiveFilesThread(self.client_socket, file_name, file_length)
                     file_thread.start()
 
-                    print("not failing :)")
                 else:
-                    # Decode the text message and emit it
-                    decoded_data = serverdata.decode('UTF-8', errors='ignore')  # Ignore invalid UTF-8 bytes
+                    decoded_data = serverdata.decode('utf-8', errors='ignore')
                     self.message_recieved.emit(decoded_data)
 
             except Exception as e:
@@ -201,6 +81,7 @@ class ReceiverThread(QThread):
                     counter += 1
                 if counter > 20:
                     break
+
                 
 class MainWindow(QMainWindow):
     def __init__(self, ):
