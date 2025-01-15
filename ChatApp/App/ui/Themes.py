@@ -1,9 +1,4 @@
 from PyQt6.QtWidgets import *
-from PyQt6.QtCore import Qt, pyqtSignal, QThread
-import socket as s
-from PyQt6.QtGui import QPixmap
-from threading import Thread
-
 
 class Themes(QMessageBox):
     def __init__(self):
@@ -84,3 +79,9 @@ if __name__ == "__main__":
     print("Selected option:", msg_box.get_result())
 
     sys.exit(app.exec_())
+
+class Themes():
+    def __innit__(self,p):
+        super().__init__()
+        self.parent= p        
+        pass
