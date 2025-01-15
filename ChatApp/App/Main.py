@@ -1,90 +1,15 @@
 from PyQt6.QtWidgets import *
-from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
+from PyQt6.QtCore import Qt, QTimer
 import socket as s
 from PyQt6.QtGui import QPixmap
 from Messages.SendHypertextMessage import SendHypertextMessage
-import os
 from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage
 
 from ui.AttachFilesWindow import AttachFilesWindow
 from ui.ScrollAreaUI import scrollarea_styles
 from ui.ActiveFriendsPanel import active_friends_panel_style
 from ui.AutoScrollButton import auto_scroll_on_button_style, auto_scroll_off_button_style
-
-class ReceiveFilesThread(QThread):
-    def __init__(self, client_socket, file_name, file_length):
-        super().__init__()
-        self.client_socket = client_socket
-        self.file_name = file_name
-        self.file_length = file_length
-
-    def run(self):
-        try:
-            download_dir = "./Downloads"
-            os.makedirs(download_dir, exist_ok=True)
-            file_path = os.path.join(download_dir, self.file_name)
-
-            with open(file_path, 'wb') as f:
-                bytes_received = 0
-                while bytes_received < self.file_length:
-                    buffer = self.client_socket.recv(min(2048, self.file_length - bytes_received))
-                    if not buffer:
-                        raise ConnectionError("Connection closed before file transfer completed.")
-                    f.write(buffer)
-                    bytes_received += len(buffer)
-                    print(f"Received {bytes_received}/{self.file_length} bytes")
-
-                print(f"File saved to: {file_path}")
-
-        except Exception as e:
-            print(f"Error in file transfer: {e}")
-
-class RecieverThread(QThread):
-    message_recieved = pyqtSignal(str)
-    file_recieved = pyqtSignal(bytes, str)
-    
-    def __init__(self, client_socket):
-        super().__init__()
-        self.client_socket = client_socket
-        self.running = True
-        
-    def run(self, ):
-        counter = 0
-        while self.running:
-            try:
-                serverdata = self.client_socket.recv(2048)
-                if not serverdata:
-                    self.client_socket.close()
-                    break
-                
-                decoded_data = serverdata.decode('UTF-8')
-
-                if serverdata.startswith(b'FILE:'):
-                    while b"\n\n" not in serverdata:
-                        serverdata += self.client_socket.recv(2048)
-
-                    header_data, _ = serverdata.split(b"\n\n", 1)
-                    header_lines = header_data.decode('utf-8').strip().split("\n")
-                    file_name = header_lines[0].split(":")[1].strip()
-                    file_length = int(header_lines[1].split(":")[1].strip())
-
-                    file_thread = ReceiveFilesThread(self.client_socket, file_name, file_length)
-                    file_thread.start()
-
-                else:
-                    decoded_data = serverdata.decode('utf-8', errors='ignore')
-
-                if decoded_data.startswith('FILE:'):
-                    self.receive_file(decoded_data)
-                else:
-
-                    self.message_recieved.emit(decoded_data)
-            except Exception as e:
-                if self.running:
-                    print(f'Fejl i ReceiverThread: {e}')
-                    counter += 1
-                if counter > 20:
-                    break
+from Messages.ReceiverThread import ReceiverThread
 
 class MainWindow(QMainWindow):
     def __init__(self, ):
@@ -98,9 +23,9 @@ class MainWindow(QMainWindow):
         self.TCP_klient.connect((self.TCP_server_ip, self.TCP_server_port))
 
         # Starter en tråd til recievertråden
-        self.reciever = RecieverThread(self.TCP_klient)
-        self.reciever.message_recieved.connect(self.handle_message)  # Connect the signal to the slot
-        self.reciever.file_recieved.connect(self.handle_file)
+        self.reciever = ReceiverThread(self.TCP_klient)
+        self.reciever.message_received.connect(self.handle_message)  # Connect the signal to the slot
+        self.reciever.file_received.connect(self.handle_file)
         self.reciever.start()
         
         # Sætter den centrale widget
