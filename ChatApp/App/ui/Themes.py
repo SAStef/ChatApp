@@ -66,22 +66,9 @@ class Themes(QMessageBox):
                     background-position: center;
                 }''')
         
-        
-
-
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    msg_box = CustomMessageBox()
-
-    msg_box.exec_()
-
+    app = QApplication([])
+    msg_box = QMessageBox()
+    msg_box.exec()
     print("Selected option:", msg_box.get_result())
-
-    sys.exit(app.exec_())
-
-class Themes():
-    def __innit__(self,p):
-        super().__init__()
-        self.parent= p        
-        pass
+    exit(app.exec())

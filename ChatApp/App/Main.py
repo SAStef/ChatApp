@@ -10,6 +10,7 @@ from ui.ScrollAreaUI import scrollarea_styles
 from ui.ActiveFriendsPanel import active_friends_panel_style
 from ui.AutoScrollButton import auto_scroll_on_button_style, auto_scroll_off_button_style
 from Messages.ReceiverThread import ReceiverThread
+from ui.SetThemeButton import set_theme_button
 
 class MainWindow(QMainWindow):
     def __init__(self, ):
@@ -68,6 +69,7 @@ class MainWindow(QMainWindow):
         self.right_group_icon.setFixedHeight(50)
         self.right_group_icon.setStyleSheet("background-color: #0D1C2F;")
         self.right_group_icon.setPixmap(QPixmap('./ChatApp/App/Pictures/ginger.jpeg'))
+        self.right_group_icon.setScaledContents(True)
 
         self.act_friends_panel = QLabel("Active users: ", self) 
         self.act_friends_panel.setFixedWidth(1000)
@@ -84,9 +86,16 @@ class MainWindow(QMainWindow):
         self.isAutoScroll = True
 
         upper_layout= QHBoxLayout()
+        
+        self.set_theme_btn= QPushButton('Set Theme')
+        self.set_theme_btn.setFixedWidth(100)
+        self.set_theme_btn.setFixedHeight(50)
+        self.set_theme_btn.setStyleSheet(set_theme_button)
+        
         upper_layout.addWidget(self.left_group_icon)
         upper_layout.addWidget(self.act_friends_panel)
         upper_layout.addWidget(self.right_group_icon)
+        upper_layout.addWidget(self.set_theme_btn)
         
         # all autoscroll stuff
         auto_scroller_layout = QVBoxLayout()
