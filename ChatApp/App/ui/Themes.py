@@ -5,76 +5,39 @@ from PyQt6.QtGui import QPixmap
 from threading import Thread
 
 
-class Themes(QMainWindow):
+class Themes(QMessageBox):
     def __init__(self):
         super().__init__()     
-        
+
+        # theme_central= QWidget(self)
+        # self.setCentralWidget(theme_central)
+
+        self.setWindowTitle('Themes')
+        self.setText('Choose a Theme')
+
         self.selected_theme= None
-
-        print("funktionen blev kaldt")
-
-        theme_central= QWidget(self)
-        self.setCentralWidget(theme_central)
-
-        self.button_MC= QPushButton('Minecraft')
-        self.button_MLP= QPushButton('My Little Pony')
-        self.button_STH= QPushButton('Sonic The Hedgehog')
-
-        theme_layout= QVBoxLayout()
-        theme_layout.addWidget(self.button_MC)
-        theme_layout.addWidget(self.button_MLP)
-        theme_layout.addWidget(self.button_STH)
-
-        theme_central.setLayout(theme_layout)
+        
+        self.button_MC= self.addButton('Minecraft', self.ApplyRole)
+        self.button_MLP= self.addButton('My Little Pony', self.ApplyRole)
+        self.button_STH= self.addButton('Sonic The Hedgehog', self.ApplyRole)
 
         self.button_MC.clicked.connect(self.themeHandleButtonClick)
         self.button_MLP.clicked.connect(self.themeHandleButtonClick)
         self.button_STH.clicked.connect(self.themeHandleButtonClick)
 
-    
-        # if self.selectedTheme == 'Minecraft':
-        
-        #     self.parent.dialogue.setStyleSheet('''
-        #         QWidget {
-        #         background-image: url("minecraft_theme.jpg");
-        #         background-repeat: no-repeat;
-        #         background-position: center;
-                
-        #         }''')
-        #     self.parent.dialogue.setScaledContents(True)
+        #self.buttonClicked.connect(self.on_button_clicked)
 
-        # elif self.selectedTheme == 'MyLittlePony':
+        # self.button_MC= QPushButton('Minecraft')
+        # self.button_MLP= QPushButton('My Little Pony')
+        # self.button_STH= QPushButton('Sonic The Hedgehog')
 
-        #     self.parent.dialogue.setStyleSheet('''
-        #         QWidget {
-        #         background-image: url("my_little_pony.jpg");
-        #         background-repeat: no-repeat;
-        #         background-position: center;
-                
-        #         }''')
-        #     self.parent.dialogue.setScaledContents(True)
-        
-        # elif self.selectedTheme == 'Sonic':
+        # theme_layout= QVBoxLayout()
+        # theme_layout.addWidget(self.button_MC)
+        # theme_layout.addWidget(self.button_MLP)
+        # theme_layout.addWidget(self.button_STH)
 
-        #     self.parent.dialouge.setStyleSheet('''
-        #         QWidget {
-        #         background-image: url("sonic_the_hedgehog.jpg");
-        #         background-repeat: no-repeat;
-        #         background-position: center;
-                
-        #         }''')
-        #     self.parent.dialogue.setScaledContents(True)
-        
-        # else:
-        #     self.parent.dialogue.SetStyleSheet('''
-        #         QWidget {
-        #         background-image: url("coconut.jpeg");
-        #         background-repeat: no-repeat;
-        #         background-position: center;
-                
-        #         }''')
-        #     self.parent.dialogue.setScaledContents(True)
-    
+        #theme_central.setLayout(theme_layout)
+
     def themeHandleButtonClick(self):
         sender= self.sender()
 
@@ -112,7 +75,12 @@ class Themes(QMainWindow):
 
 
 if __name__ == "__main__":
-    app = QApplication([])  # Initialiser QApplication
-    gui = Themes()       # Instantierer gui - som jo er instans af QMainWindow
-    gui.show()              # Skal specifikt gøres synlig (kan også ske i konstruktor)
-    app.exec()
+    app = QApplication(sys.argv)
+
+    msg_box = CustomMessageBox()
+
+    msg_box.exec_()
+
+    print("Selected option:", msg_box.get_result())
+
+    sys.exit(app.exec_())
