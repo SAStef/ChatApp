@@ -1,3 +1,4 @@
+# Linje 73 broadcaster også beskeden tilbage til en afsender
 import socket as s
 from threading import Thread, Lock
 import signal
@@ -70,7 +71,7 @@ class MainServer:
     def BroadcastMessage(self, message, sender_socket):
         with self.lock:
             for client in self.clients:
-                if client != sender_socket:
+                if client != sender_socket: #or client in sender_socket:        # Debugging . I den rigtige serverkode, skal der kommenteres før or statementen
                     try:
                         client.sendall(message.encode('utf-8'))
                     except Exception as e:
@@ -103,11 +104,12 @@ class MainServer:
 
         with self.lock:
             for client in self.clients:
-                if client != client_socket:
+                if client != client_socket: # or client in client_socket:           # Samme som linje 73
                     try:
                         client.send(new_file_header.encode('utf-8'))
                         with open(file_path, 'rb') as f:
                             while buffer := f.read(2048):
+                                print(f'{buffer}')
                                 client.send(buffer)
                         print(f'File {file_name} has been broadcasted to the group chat')
                     

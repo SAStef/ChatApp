@@ -1,10 +1,15 @@
+
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
 import socket as s
 from PyQt6.QtGui import QPixmap
 from Messages.SendHypertextMessage import SendHypertextMessage
 import os
-from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage
+
+
+# from ui.AttachFilesWindow import AttachFilesWindow #ikke brugt endnu - skal uncomment'es
+# from ui.Themes import Themes #ikke brugt endnu - skal uncomment'es
+from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikke brugt endnu
 
 from ui.AttachFilesWindow import AttachFilesWindow
 from ui.ScrollAreaUI import scrollarea_styles
