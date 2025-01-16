@@ -1,7 +1,6 @@
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QPixmap
 
-
 class Themes(QMessageBox):
     def __init__(self,p):
         super().__init__()     
