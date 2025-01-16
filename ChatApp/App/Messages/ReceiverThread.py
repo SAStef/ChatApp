@@ -7,6 +7,7 @@ class ReceiveFilesThread(QThread):
         self.client_socket = client_socket
         self.file_name = file_name
         self.data_chunk_length = data_chunk_length
+        self.isRunning = True
 
     def run(self):
         try:
@@ -36,6 +37,7 @@ class ReceiveFilesThread(QThread):
             print(f"Error in file transfer: {e}")
         
         finally:
+            self.isRunning = False
             self.client_socket.close()
 
 class ReceiverThread(QThread):
@@ -57,7 +59,7 @@ class ReceiverThread(QThread):
                     self.client_socket.close()
                     break
 
-                if serverData.startswith(b'FILE:'):
+                if serverData.startswith(b'FILE:') or ReceiveFilesThread.isRunning == True:
                     header_data = serverData
                     while b"\n\n" not in header_data:
                         header_data += self.client_socket.recv(2048)
