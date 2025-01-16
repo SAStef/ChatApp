@@ -1,8 +1,5 @@
 from PyQt6.QtWidgets import *
-from PyQt6.QtCore import Qt, pyqtSignal, QThread
-import socket as s
 from PyQt6.QtGui import QPixmap
-from threading import Thread
 
 
 class Themes(QMessageBox):
@@ -11,9 +8,9 @@ class Themes(QMessageBox):
 
         self.setWindowTitle('Themes')
         self.setText('Choose a Theme')
-        self.parent: MainWindow = p
+        self.parent = p
 
-        self.selected_theme= None
+        self.selected_theme = None
         
         self.button_MC= self.addButton('Minecraft', self.ButtonRole.ActionRole)
         self.button_MLP= self.addButton('My Little Pony', self.ButtonRole.ActionRole)
@@ -22,7 +19,6 @@ class Themes(QMessageBox):
         self.button_MC.clicked.connect(self.themeHandleButtonClick)
         self.button_MLP.clicked.connect(self.themeHandleButtonClick)
         self.button_STH.clicked.connect(self.themeHandleButtonClick)
-
        
         self.exec()
 
