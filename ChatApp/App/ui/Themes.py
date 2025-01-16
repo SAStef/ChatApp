@@ -6,81 +6,45 @@ from threading import Thread
 
 
 class Themes(QMessageBox):
-    def __init__(self):
+    def __init__(self,p):
         super().__init__()     
-
-        # theme_central= QWidget(self)
-        # self.setCentralWidget(theme_central)
 
         self.setWindowTitle('Themes')
         self.setText('Choose a Theme')
+        self.parent: MainWindow = p
 
         self.selected_theme= None
         
-        self.button_MC= self.addButton('Minecraft', self.ApplyRole)
-        self.button_MLP= self.addButton('My Little Pony', self.ApplyRole)
-        self.button_STH= self.addButton('Sonic The Hedgehog', self.ApplyRole)
+        self.button_MC= self.addButton('Minecraft', self.ButtonRole.ActionRole)
+        self.button_MLP= self.addButton('My Little Pony', self.ButtonRole.ActionRole)
+        self.button_STH= self.addButton('Sonic The Hedgehog', self.ButtonRole.ActionRole)
 
         self.button_MC.clicked.connect(self.themeHandleButtonClick)
         self.button_MLP.clicked.connect(self.themeHandleButtonClick)
         self.button_STH.clicked.connect(self.themeHandleButtonClick)
 
-        #self.buttonClicked.connect(self.on_button_clicked)
-
-        # self.button_MC= QPushButton('Minecraft')
-        # self.button_MLP= QPushButton('My Little Pony')
-        # self.button_STH= QPushButton('Sonic The Hedgehog')
-
-        # theme_layout= QVBoxLayout()
-        # theme_layout.addWidget(self.button_MC)
-        # theme_layout.addWidget(self.button_MLP)
-        # theme_layout.addWidget(self.button_STH)
-
-        #theme_central.setLayout(theme_layout)
+       
+        self.exec()
 
     def themeHandleButtonClick(self):
         sender= self.sender()
 
         if sender == self.button_MC:
-            self.selected_theme= ('Minecraft')
+            self.selected_theme= 'Minecraft'
         elif sender == self.button_MLP:
-            self.selected_theme= ('MyLittlePony')
+            self.selected_theme= 'MyLittlePony'
         elif sender == self.button_STH:
-            self.selected_theme= ('Sonic')
+            self.selected_theme= 'Sonic'
+            
+        self.appliedTheme()
     
     def appliedTheme(self):
+    
         if self.selected_theme == 'Minecraft':
-            self.setStyleSheet('''
-                QWidget {
-                    background-image: url("minecraft_theme.jpg");
-                    background-repeat: no-repeat;
-                    background-position: center;
-                }''')
-        elif self.selected_theme == 'My Little Pony':
-            self.setStyleSheet('''
-                QWidget {
-                    background-image: url("my_little_pony.jpg");
-                    background-repeat: no-repeat;
-                    background-position: center;
-                }''')
-        elif self.selected_theme == 'Sonic The Hedgehog':
-            self.setStyleSheet('''
-                QWidget {
-                    background-image: url("sonic_the_hedgehog.jpg");
-                    background-repeat: no-repeat;
-                    background-position: center;
-                }''')
-        
-        
+            self.parent.right_group_icon.setPixmap(QPixmap('./ChatApp\App\Pictures\minecraft_theme.jpg'))
 
+        elif self.selected_theme == 'MyLittlePony':
+            self.parent.right_group_icon.setPixmap(QPixmap('./ChatApp\App\Pictures\my_little_pony.jpg'))
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    msg_box = CustomMessageBox()
-
-    msg_box.exec_()
-
-    print("Selected option:", msg_box.get_result())
-
-    sys.exit(app.exec_())
+        elif self.selected_theme == 'Sonic':
+            self.parent.right_group_icon.setPixmap(QPixmap('./ChatApp\App\Pictures\sonic_the_hedgehog.jpg'))

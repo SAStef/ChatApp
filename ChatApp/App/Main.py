@@ -76,7 +76,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         
         # Tilsutter til chat-serveren
-        self.TCP_server_ip = "10.209.224.4"
+        self.TCP_server_ip = "127.0.0.1"
         self.TCP_server_port = 1337
         self.TCP_klient = s.socket(s.AF_INET, s.SOCK_STREAM)
         self.TCP_klient.connect((self.TCP_server_ip, self.TCP_server_port))
@@ -91,7 +91,7 @@ class MainWindow(QMainWindow):
         central = QWidget(self)
         self.setCentralWidget(central)
 
-        self.setWindowTitle("Chatprogram")          # Titlen på vinduet
+        self.setWindowTitle("Cypher+ - Din ynglings Beskedtjeneste")          # Titlen på vinduet
         self.resize(1920, 1080)                     # Standard størrelsen på vinduet der åbner
         self.setMinimumSize(800, 400)               # Mininum størrelsen på vinduet
 
@@ -126,7 +126,7 @@ class MainWindow(QMainWindow):
         self.right_group_icon.setFixedWidth(100)
         self.right_group_icon.setFixedHeight(50)
         self.right_group_icon.setStyleSheet("background-color: #0D1C2F;")
-        self.right_group_icon.setPixmap(QPixmap('./ChatApp/App/Pictures/ginger.jpeg'))
+        self.right_group_icon.setPixmap(QPixmap('./ChatApp\App\Pictures\coconut.jpeg'))
         self.right_group_icon.setScaledContents(True)
 
         self.act_friends_panel = QLabel("Active users: ", self) 
@@ -286,7 +286,7 @@ class MainWindow(QMainWindow):
             self.chatfld.setText("")
         
         elif sender == self.set_theme_btn:
-            Themes()
+            Themes(self)
 
         elif sender == self.attachbutton:
             AttachFilesWindow(self)
