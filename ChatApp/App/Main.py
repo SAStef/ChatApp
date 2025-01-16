@@ -133,6 +133,7 @@ class MainWindow(QMainWindow):
         # Handle button signals
         self.sendbutton.clicked.connect(self.handleButtonClick)
         self.attachbutton.clicked.connect(self.handleButtonClick)
+        self.set_theme_btn.clicked.connect(self.handleButtonClick)
         
         self.AutoScrollOff.clicked.connect(self.autoScrollButton)
         self.AutoScrollOn.clicked.connect(self.autoScrollButton)
