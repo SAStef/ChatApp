@@ -1,27 +1,30 @@
 # ChatApp
-Cyberteknologi DTU opgave
+Cyber Technology DTU Assignment
 
-This project was made as an exercise for the DTU subject, Cyberteknologi del 2. 
+This project was made as an exercise for the DTU subject, Cyber Technology Part 2.
 
-The project is basically a messaging app. In this project, a TCP server was coded and implemented, which acts as a midpoint and controller, 
-along with a client-application which is a python file to be run by each client on each end of the connection. The whole project is singlehandedly coded with python, 
-where the UI implementation was done with the library PyQt6 and multithreading was used along with a socket connection. 
+The project is essentially a messaging app. In this project, a TCP server was coded and implemented, acting as a midpoint and controller, along with a client application, which is a Python file to be run by each client on either end of the connection. The entire project was coded solely in Python, where the UI implementation was done using the PyQt6 library, and multithreading was used along with a socket connection.
 
-\begin{enumerate}
-    \item Åbn linket: {https://github.com/SAStef/ChatApp.git}.
-    \item Klon koden fra repository.
-    \item Åbn koden i VS-Code.
-    \item Kontroller at IP-adressen i \texttt{Main.py} peger på chatserveren. Dette konfigureres på linje 21.
-    \item Kør \texttt{server.py} i en dedikeret terminal.
-    \item \texttt{main.py} køres i en dedikeret terminal af hver bruger.
-    \item Cypher+ er nu åben og dens funktioner tilgængelige. Disse inkluderer:
-    \begin{enumerate}
-        \item Tekstfelt til beskeden der skal sendes.
-        \item \texttt{Send Besked}-knappen der sender beskeden (Her kan der med fordel også benyttes \texttt{Enter}-knappen).
-        \item \texttt{Vedhæft Fil(er)}-knappen (Crashes kan forekomme).
-        \item \texttt{Set Theme}-knappen, der kræver at et tema vælges inden yderligere brug.
-        \item \texttt{AutoScroll On/Off}-knapperne.
-    \end{enumerate}
-    \item Send beskeder til hinanden i chatrummet!
-    
-\end{enumerate}
+## Getting Started
+
+1. Open the repository link: [ChatApp Repository](https://github.com/SAStef/ChatApp.git).
+   
+2. Clone the code from the repository by running the following command in the terminal:
+   ```bash
+   git clone https://github.com/SAStef/ChatApp.git
+3. Open the project folder in VS Code or another IDE.
+
+4. Ensure that the IP address in the Main.py file points to the chat server's IP address (the computer running the Server.py file). This can be configured on line 21.
+
+5. Start the chat server by running the following command in a dedicated terminal within the correct directory: python Server.py
+
+6. Start the client application by running the following command in a dedicated terminal for each user: python main.py
+   
+7. Cypher+ is now open, and its features are available. These include: a) A text field for entering messages to be sent.
+   
+b) The Send Message button, which sends the message (or use the Enter key).
+c) The Attach File(s) button (note that crashes may occur).
+d) The Set Theme button (a theme must be selected before further use).
+e) The AutoScroll On/Off buttons for managing the autoscroll function.
+
+8. Send messages to each other in the chatroom and explore the application!
