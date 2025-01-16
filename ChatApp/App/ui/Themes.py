@@ -36,10 +36,10 @@ class Themes(QMessageBox):
     def appliedTheme(self):
     
         if self.selected_theme == 'Minecraft':
-            self.parent.right_group_icon.setPixmap(QPixmap('./ChatApp\App\Pictures\minecraft_theme.jpg'))
+            self.parent.right_group_icon.setPixmap(QPixmap('./ChatApp/App/Pictures/minecraft_theme.jpg'))
 
         elif self.selected_theme == 'MyLittlePony':
-            self.parent.right_group_icon.setPixmap(QPixmap('./ChatApp\App\Pictures\my_little_pony.jpg'))
+            self.parent.right_group_icon.setPixmap(QPixmap('./ChatApp/App/Pictures/my_little_pony.jpg'))
 
         elif self.selected_theme == 'Sonic':
-            self.parent.right_group_icon.setPixmap(QPixmap('./ChatApp\App\Pictures\sonic_the_hedgehog.jpg'))
+            self.parent.right_group_icon.setPixmap(QPixmap('./ChatApp/App/Pictures/sonic_the_hedgehog.jpg'))
