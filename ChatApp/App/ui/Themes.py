@@ -1,9 +1,4 @@
 from PyQt6.QtWidgets import *
-from PyQt6.QtCore import Qt, pyqtSignal, QThread
-import socket as s
-from PyQt6.QtGui import QPixmap
-from threading import Thread
-
 
 class Themes(QMessageBox):
     def __init__(self,p):

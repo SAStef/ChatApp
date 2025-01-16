@@ -1,90 +1,33 @@
 from PyQt6.QtWidgets import *
-from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
+from PyQt6.QtCore import Qt, QTimer
 import socket as s
 from PyQt6.QtGui import QPixmap
 from Messages.SendHypertextMessage import SendHypertextMessage
-from threading import Thread
-from os import path
-import os
-# from ui.AttachFilesWindow import AttachFilesWindow #ikke brugt endnu - skal uncomment'es
-# from ui.Themes import Themes #ikke brugt endnu - skal uncomment'es
-from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage #bliver ikke brugt endnu
+from Messages.ReceiveHypertextMessage import ReceiveHypertextMessage
 
-from ui.AttachFilesWindow import AttachFilesWindow # bliver heller ikke brugt endnu
+from ui.AttachFilesWindow import AttachFilesWindow
 from ui.ScrollAreaUI import scrollarea_styles
 from ui.ActiveFriendsPanel import active_friends_panel_style
 from ui.AutoScrollButton import auto_scroll_on_button_style, auto_scroll_off_button_style
-from ui.Themes import Themes
+from Messages.ReceiverThread import ReceiverThread
 from ui.SetThemeButton import set_theme_button
-
-class RecieverThread(QThread):
-    message_recieved = pyqtSignal(str)
-    file_recieved = pyqtSignal(bytes, str)
-    
-    def __init__(self, client_socket):
-        super().__init__()
-        self.client_socket = client_socket
-        self.running = True
-        
-    def run(self, ):
-        counter = 0
-        while self.running:
-            try:
-                serverdata = self.client_socket.recv(2048)
-                if not serverdata:
-                    self.client_socket.close()
-                    break
-                
-                decoded_data = serverdata.decode('UTF-8')
-
-                if decoded_data.startswith('FILE:'):
-                    self.receive_file(decoded_data)
-                else:
-                    self.message_recieved.emit(decoded_data)
-            except Exception as e:
-                if self.running:
-                    print(f'Fejl i ReceiverThread: {e}')
-                    counter += 1
-                if counter > 20:
-                    break
-
-    def receive_file(self, file_header):
-        header_lines = file_header.split("\n")
-        filename = header_lines[0].split(":")[1].strip()
-        file_length = int(header_lines[1].split(":")[1].strip())
-
-        download_dir = "./Downloads"
-        if not path.exists(download_dir):
-            os.makedirs(download_dir)
-
-        file_path = path.join(download_dir, filename)
-        print(f"Modtager fil: {filename} på {file_length} bytes...")
-
-        with open(file_path, 'wb') as f:
-            bytes_received = 0
-            while bytes_received < file_length:
-                buffer = self.client_socket.recv(2048)
-                if not buffer:
-                    break
-                f.write(buffer)
-                bytes_received += len(buffer)
-        
-        print(f'Fil gemt med stien: {file_path}')
 
 class MainWindow(QMainWindow):
     def __init__(self, ):
         super().__init__()
         
         # Tilsutter til chat-serveren
-        self.TCP_server_ip = "127.0.0.1"
+
+        self.TCP_server_ip = "10.209.203.232"
+        
         self.TCP_server_port = 1337
         self.TCP_klient = s.socket(s.AF_INET, s.SOCK_STREAM)
         self.TCP_klient.connect((self.TCP_server_ip, self.TCP_server_port))
 
         # Starter en tråd til recievertråden
-        self.reciever = RecieverThread(self.TCP_klient)
-        self.reciever.message_recieved.connect(self.handle_message)  # Connect the signal to the slot
-        self.reciever.file_recieved.connect(self.handle_file)
+        self.reciever = ReceiverThread(self.TCP_klient)
+        self.reciever.message_received.connect(self.handle_message)  # Connect the signal to the slot
+        self.reciever.file_received.connect(self.handle_file)
         self.reciever.start()
         
         # Sætter den centrale widget
@@ -126,11 +69,13 @@ class MainWindow(QMainWindow):
         self.right_group_icon.setFixedWidth(100)
         self.right_group_icon.setFixedHeight(50)
         self.right_group_icon.setStyleSheet("background-color: #0D1C2F;")
-        self.right_group_icon.setPixmap(QPixmap('./ChatApp\App\Pictures\coconut.jpeg'))
+
+        self.right_group_icon.setPixmap(QPixmap('./ChatApp/App/Pictures/coconut.jpeg'))
+
         self.right_group_icon.setScaledContents(True)
 
         self.act_friends_panel = QLabel("Active users: ", self) 
-        self.act_friends_panel.setFixedWidth(800)
+        self.act_friends_panel.setFixedWidth(1000)
         self.act_friends_panel.setFixedHeight(30)
 
         self.act_friends_panel.setStyleSheet(active_friends_panel_style)
@@ -149,17 +94,12 @@ class MainWindow(QMainWindow):
         self.set_theme_btn.setFixedWidth(100)
         self.set_theme_btn.setFixedHeight(50)
         self.set_theme_btn.setStyleSheet(set_theme_button)
-
         
-
-        upper_layout= QHBoxLayout()
-        #upper_layout.addSpacerItem(upper_left_spacer)
         upper_layout.addWidget(self.left_group_icon)
         upper_layout.addWidget(self.act_friends_panel)
-        upper_layout.addWidget(self.set_theme_btn)
         upper_layout.addWidget(self.right_group_icon)
+        upper_layout.addWidget(self.set_theme_btn)
         
-
         # all autoscroll stuff
         auto_scroller_layout = QVBoxLayout()
         
@@ -193,7 +133,6 @@ class MainWindow(QMainWindow):
         # Handle button signals
         self.sendbutton.clicked.connect(self.handleButtonClick)
         self.attachbutton.clicked.connect(self.handleButtonClick)
-        self.set_theme_btn.clicked.connect(self.handleButtonClick)
         
         self.AutoScrollOff.clicked.connect(self.autoScrollButton)
         self.AutoScrollOn.clicked.connect(self.autoScrollButton)
@@ -284,7 +223,7 @@ class MainWindow(QMainWindow):
             if self.isAutoScroll == True:
                 QTimer.singleShot(1, lambda: self.dialogue.verticalScrollBar().setValue(self.dialogue.verticalScrollBar().maximum()))
             self.chatfld.setText("")
-        
+
         elif sender == self.set_theme_btn:
             Themes(self)
 
