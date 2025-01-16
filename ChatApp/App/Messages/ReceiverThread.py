@@ -14,12 +14,13 @@ class ReceiveFilesThread(QThread):
             os.makedirs(download_dir, exist_ok=True)
             file_path = os.path.join(download_dir, self.file_name)
 
+            file_stream = self.client_socket.makefile('rb')
             with open(file_path, 'wb') as f:
                 bytes_received = 0
-                while bytes_received < self.data_chunk_length:
+                while bytes_received < 4096:
                     remaining_bytes = self.data_chunk_length - bytes_received
                     
-                    buffer = self.client_socket.recv(min(2048, remaining_bytes))
+                    buffer = file_stream.read(min(4096, remaining_bytes))
                     
                     if not buffer:
                         raise ConnectionError("Connection closed before file transfer completed.")
@@ -51,21 +52,23 @@ class ReceiverThread(QThread):
         counter = 0
         while self.running:
             try:
-                serverData = self.client_socket.recv(2048)
+                serverData = self.client_socket.recv(4096).decode(encoding='iso-8859-1', errors='ignore')
                 
                 if not serverData:
                     self.client_socket.close()
                     break
 
                 if serverData.startswith(b'FILE:'):
-                    header_data = serverData
-                    while b"\n\n" not in header_data:
-                        header_data += self.client_socket.recv(2048)
                     
+                    header_data = serverData
+                    while b"\n\n" not in header_data:  
+                        header_data += self.client_socket.recv(4096).decode(encoding='iso-8859-1', errors='ignore')
+
                     header_lines = header_data.decode('utf-8').strip().split("\n")
                     file_name = header_lines[0].split(":")[1].strip()
                     data_chunk_length = int(header_lines[1].split(":")[1].strip())
 
+                    
                     file_thread = ReceiveFilesThread(self.client_socket, file_name, data_chunk_length)
                     file_thread.start()
 
