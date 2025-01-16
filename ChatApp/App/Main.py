@@ -34,7 +34,7 @@ class MainWindow(QMainWindow):
         central = QWidget(self)
         self.setCentralWidget(central)
 
-        self.setWindowTitle("Cypher+ - Din ynglings Beskedtjeneste")          # Titlen på vinduet
+        self.setWindowTitle("Cypher+ - Din yndlings Beskedtjeneste")          # Titlen på vinduet
         self.resize(1920, 1080)                     # Standard størrelsen på vinduet der åbner
         self.setMinimumSize(800, 400)               # Mininum størrelsen på vinduet
 
