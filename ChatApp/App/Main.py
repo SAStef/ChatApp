@@ -51,6 +51,14 @@ class MainWindow(QMainWindow):
         self.dialogue = QScrollArea()
         self.dialogue.setWidgetResizable(True)
         self.dialogue.setStyleSheet(scrollarea_styles)
+
+        # QLabel for the image inside QScrollArea
+        self.label = QLabel()  # Define this as an instance attribute
+        pixmap = QPixmap('ChatApp/App/Pictures/coconut.jpeg')  # Default image
+        self.label.setPixmap(pixmap)
+        self.label.setScaledContents(True)  # Ensure image scales
+
+        self.dialogue.setWidget(self.label)
     
         self.dialogue_content = QWidget()
         self.dialogue_layout = QVBoxLayout(self.dialogue_content)
